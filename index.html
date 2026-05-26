@@ -742,7 +742,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        bottom: calc(56px + env(safe-area-inset-bottom, 0px)); /* tab-bar height */
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px))); /* tab-bar height */
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -772,7 +772,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 64px + 8px);
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -809,7 +809,7 @@
         width: 100% !important;
         margin: 0 !important;
         /* leave room for fixed player-bar + tab-bar */
-        padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + 64px) !important;
+        padding-bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px) !important;
         overflow: hidden;
         box-sizing: border-box;
       }
@@ -896,8 +896,8 @@
       #mobile-tabs {
         display: flex;
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: calc(56px + env(safe-area-inset-bottom, 0px));
-        padding-bottom: env(safe-area-inset-bottom, 0px);
+        height: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
+        padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
@@ -909,7 +909,7 @@
         content: '';
         position: fixed;
         bottom: 0; left: 0; right: 0;
-        height: env(safe-area-inset-bottom, 0px);
+        height: var(--sab, env(safe-area-inset-bottom, 0px));
         background: rgba(15,10,40,.92);
         z-index: 349;
       }
@@ -1701,6 +1701,26 @@ function setStatus(s) {
 // PWA icon data URL for Media Session artwork
 const _pwaIconHref = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
 
+// Cache favicon as base64 to avoid mixed-content block on lock screen
+const _faviconCache = {};
+async function fetchFaviconAsDataURL(url) {
+  if (!url) return null;
+  if (_faviconCache[url]) return _faviconCache[url];
+  try {
+    const resp = await fetch(url, { mode: 'cors', cache: 'force-cache' });
+    if (!resp.ok) throw new Error('fetch failed');
+    const blob = await resp.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => { _faviconCache[url] = reader.result; resolve(reader.result); };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 function updateBar() {
   const s = state.current; if (!s) return;
   // Update inner span for marquee support
@@ -1716,17 +1736,31 @@ function updateBar() {
   const isFav = state.favorites.some(f => f.stationuuid === s.stationuuid);
   btnFavCur.textContent = isFav ? '★' : '☆';
   btnFavCur.classList.toggle('active', isFav);
-  // Media Session — controls Dynamic Island / lock screen artwork
+  // Media Session — controls lock screen artwork
   if ('mediaSession' in navigator) {
-    const artwork = [];
-    if (s.favicon) artwork.push({ src: s.favicon, sizes: '96x96' });
-    if (_pwaIconHref) artwork.push({ src: _pwaIconHref, sizes: '512x512', type: 'image/png' });
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: s.alias || s.name,
-      artist: s.country || s.tags || 'WebRadio',
-      album: 'WebRadio',
-      artwork
-    });
+    // Set metadata immediately with PWA icon, then upgrade to favicon if available
+    const setMediaMeta = (artworkSrc) => {
+      const artwork = [];
+      if (artworkSrc) artwork.push({ src: artworkSrc, sizes: '512x512', type: 'image/png' });
+      if (_pwaIconHref) artwork.push({ src: _pwaIconHref, sizes: '512x512', type: 'image/png' });
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: s.alias || s.name,
+        artist: s.country || s.tags || 'WebRadio',
+        album: 'WebRadio',
+        artwork
+      });
+    };
+    // Start with PWA icon immediately
+    setMediaMeta(null);
+    // Try to fetch favicon as base64 and upgrade
+    if (s.favicon) {
+      fetchFaviconAsDataURL(s.favicon).then(dataUrl => {
+        // Only update if still the same station
+        if (state.current && state.current.stationuuid === s.stationuuid && dataUrl) {
+          setMediaMeta(dataUrl);
+        }
+      });
+    }
     navigator.mediaSession.setActionHandler('play', () => {
       // If audio has stalled/errored, do a full reload; otherwise just resume
       if (audio.paused && (audio.readyState < 2 || state.status === 'error')) {
@@ -2546,6 +2580,25 @@ document.addEventListener('click', function(e) {
     if (btn) btn.style.color = '';
   }
 });
+
+/* ═══════════ iOS SAFE AREA BOTTOM FIX ═══════════ */
+(function() {
+  function setSafeArea() {
+    // Compare window.innerHeight vs screen layout to detect home-indicator height
+    const safeFromCSS = parseInt(
+      getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0'
+    );
+    // Read the actual env() value via a temp element
+    const probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(probe);
+    const sab = probe.offsetHeight || 0;
+    document.body.removeChild(probe);
+    document.documentElement.style.setProperty('--sab', sab + 'px');
+  }
+  setSafeArea();
+  window.addEventListener('resize', setSafeArea);
+})();
 </script>
 </body>
 </html>
