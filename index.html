@@ -742,7 +742,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px))); /* tab-bar height */
+        bottom: 56px; /* tab-bar visual height only; safe-area is painted, not reserved */
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -772,7 +772,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
+        bottom: calc(56px + 64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -809,7 +809,7 @@
         width: 100% !important;
         margin: 0 !important;
         /* leave room for fixed player-bar + tab-bar */
-        padding-bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px) !important;
+        padding-bottom: calc(56px + 64px) !important;
         overflow: hidden;
         box-sizing: border-box;
       }
@@ -896,15 +896,15 @@
       #mobile-tabs {
         display: flex;
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
-        padding-bottom: var(--sab, env(safe-area-inset-bottom, 0px));
+        height: 56px;
+        padding-bottom: 0;
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
       }
-      /* Fill home-indicator safe area below tab bar */
+      /* Fill home-indicator safe area below tab bar without affecting layout */
       #mobile-tabs::after {
         content: '';
         position: fixed;
@@ -1149,7 +1149,7 @@
       <span>切换主题色</span>
     </div>
     <div class="kb-sep"></div>
-    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.0</div>
+    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.2</div>
 </div>
 
 <!-- ── Mobile Volume Popover ── -->
@@ -1705,21 +1705,46 @@ function setStatus(s) {
 // PWA icon data URL for Media Session artwork
 const _pwaIconHref = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
 
-// Cache favicon as base64 to avoid mixed-content block on lock screen
+// Cache favicon as normalized 512x512 PNG data URL to improve lock-screen adoption
 const _faviconCache = {};
 async function fetchFaviconAsDataURL(url) {
   if (!url) return null;
   if (_faviconCache[url]) return _faviconCache[url];
   try {
-    const resp = await fetch(url, { mode: 'cors', cache: 'force-cache' });
-    if (!resp.ok) throw new Error('fetch failed');
-    const blob = await resp.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => { _faviconCache[url] = reader.result; resolve(reader.result); };
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const loaded = await new Promise((resolve, reject) => {
+      img.onload = () => resolve(true);
+      img.onerror = reject;
+      img.src = url;
     });
+    if (!loaded) return null;
+
+    const size = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+
+    // Dark background for non-square / transparent favicons
+    ctx.fillStyle = '#111118';
+    ctx.fillRect(0, 0, size, size);
+
+    const iw = img.naturalWidth || size;
+    const ih = img.naturalHeight || size;
+    const scale = Math.min((size * 0.78) / iw, (size * 0.78) / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = (size - dw) / 2;
+    const dy = (size - dh) / 2;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, dx, dy, dw, dh);
+
+    const dataUrl = canvas.toDataURL('image/png');
+    _faviconCache[url] = dataUrl;
+    return dataUrl;
   } catch {
     return null;
   }
