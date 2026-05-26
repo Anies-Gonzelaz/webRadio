@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { margin: 0; padding: 0; width: 100%; overscroll-behavior: none; }
+    html, body { margin: 0; padding: 0; width: 100%; overscroll-behavior: none; background: #0a0520; }
 
     :root {
       --a1: #6366f1;  /* primary accent — overwritten by JS */
@@ -903,8 +903,15 @@
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
-        /* extend background into home-indicator zone */
-        box-shadow: 0 calc(env(safe-area-inset-bottom, 20px) + 20px) 0 0 rgba(15,10,40,.92);
+      }
+      /* Fill home-indicator safe area below tab bar */
+      #mobile-tabs::after {
+        content: '';
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        height: env(safe-area-inset-bottom, 0px);
+        background: rgba(15,10,40,.92);
+        z-index: 349;
       }
       .tab-btn {
         flex: 1;
@@ -1712,15 +1719,22 @@ function updateBar() {
   // Media Session — controls Dynamic Island / lock screen artwork
   if ('mediaSession' in navigator) {
     const artwork = [];
-    if (_pwaIconHref) artwork.push({ src: _pwaIconHref, sizes: '512x512', type: 'image/png' });
     if (s.favicon) artwork.push({ src: s.favicon, sizes: '96x96' });
+    if (_pwaIconHref) artwork.push({ src: _pwaIconHref, sizes: '512x512', type: 'image/png' });
     navigator.mediaSession.metadata = new MediaMetadata({
       title: s.alias || s.name,
       artist: s.country || s.tags || 'WebRadio',
       album: 'WebRadio',
       artwork
     });
-    navigator.mediaSession.setActionHandler('play',  () => { audio.play(); });
+    navigator.mediaSession.setActionHandler('play', () => {
+      // If audio has stalled/errored, do a full reload; otherwise just resume
+      if (audio.paused && (audio.readyState < 2 || state.status === 'error')) {
+        playStation(state.current);
+      } else {
+        audio.play().catch(() => playStation(state.current));
+      }
+    });
     navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); });
     navigator.mediaSession.setActionHandler('stop',  () => { audio.pause(); });
   }
