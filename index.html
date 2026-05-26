@@ -107,8 +107,21 @@
 
     /* Theme picker */
     .theme-picker { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-    .theme-label { font-size: 11px; color: var(--text-muted); letter-spacing: .3px; }
+    .theme-label { font-size: 16px; font-weight: 600; color: var(--text-muted); letter-spacing: .3px; }
     .theme-swatches { display: flex; gap: 5px; }
+    /* Mobile help button — hidden on desktop, shown on mobile */
+    #btn-mobile-help {
+      display: none;
+      width: 28px; height: 28px; border-radius: 8px;
+      border: 1px solid rgba(255,255,255,.2);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.65);
+      cursor: pointer;
+      align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background-color .15s, color .15s;
+    }
+    #btn-mobile-help:hover { background: rgba(255,255,255,.18); color: #fff; }
     .swatch {
       width: 21px; height: 21px; border-radius: 50%; cursor: pointer;
       border: 2.5px solid transparent; outline: none;
@@ -211,7 +224,7 @@
       cursor: pointer; color: rgba(255,255,255,.75);
       display: flex; align-items: center; justify-content: center;
       font-size: 20px; flex-shrink: 0;
-      transition: background .15s, border-color .15s, transform .12s, color .15s;
+      transition: background-color .15s, border-color .15s, transform .12s, color .15s;
     }
     .icon-btn:hover {
       background: rgba(255,255,255,.18);
@@ -281,22 +294,48 @@
       box-sizing: border-box;
     }
 
+    /* PC: pane wrappers are invisible to grid layout */
+    .mobile-tab-pane { display: contents; }
+
     aside { display: flex; flex-direction: column; min-height: 0; }
     aside .glass-card { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
 
     /* ───── CARD ───── */
     .card-header {
-      padding: 13px 16px 11px;
+      padding: 10px 16px;
       border-bottom: 1px solid var(--stroke2);
-      font-size: 11px; font-weight: 700; letter-spacing: .6px;
-      color: var(--text-muted); text-transform: uppercase;
+      font-size: 15px; font-weight: 700; letter-spacing: 0;
+      color: var(--text-muted); text-transform: none;
       display: flex; align-items: center; justify-content: space-between;
+      min-height: 52px;
     }
     .card-header-title { display: flex; align-items: center; gap: 7px; }
+    .card-header-actions {
+      display: flex; align-items: center; gap: 6px;
+      margin-left: auto;
+    }
+    /* Header button — matches .btn-icon size in fav list */
+    .btn-header {
+      width: 30px; height: 30px; border-radius: 8px;
+      border: none;
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: background-color .15s, color .15s, transform .12s;
+    }
+    .btn-header:hover {
+      background: rgba(255,255,255,.16);
+      color: #fff; transform: scale(1.12);
+    }
+    .btn-header:active { transform: scale(.9); }
     .count-badge {
       background: rgba(255,255,255,.15); border-radius: 20px;
-      padding: 1px 7px; font-size: 10px; color: var(--text-sub);
-      font-weight: 600; letter-spacing: 0;
+      height: 30px; padding: 0 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 12px; color: var(--text-sub);
+      font-weight: 600; letter-spacing: 0; white-space: nowrap;
     }
 
     /* ───── FAVORITES ───── */
@@ -320,7 +359,7 @@
       flex: 1; padding: 6px 0; border-radius: 8px; border: none; cursor: pointer;
       font-size: 12px; font-weight: 600; font-family: inherit;
       background: rgba(255,255,255,.12); color: #fff;
-      transition: background .15s;
+      transition: background-color .15s;
     }
     .si-original-name {
       font-style: italic; opacity: .55;
@@ -353,7 +392,7 @@
       padding: 11px 14px;
       display: flex; align-items: center; gap: 11px;
       cursor: pointer;
-      transition: background .15s;
+      transition: background-color .15s;
       border-bottom: 1px solid var(--stroke2);
     }
     .station-item:last-child { border-bottom: none; }
@@ -432,7 +471,7 @@
       color: rgba(255,255,255,.5);
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: color .15s, background .15s, transform .12s;
+      transition: color .15s, background-color .15s, transform .12s;
     }
     .btn-icon:hover {
       background: rgba(255,255,255,.16);
@@ -455,7 +494,7 @@
       color: rgba(255,255,255,.4);
       background: rgba(255,255,255,.06);
       border-radius: 8px; border: none;
-      transition: color .15s, background .15s;
+      transition: color .15s, background-color .15s;
     }
     .drag-handle:hover  { color: #fff; background: rgba(255,255,255,.16); }
     .drag-handle:active { cursor: grabbing; }
@@ -510,19 +549,51 @@
     }
 
     /* ───── KEYBOARD HINTS ───── */
+    /* ── Keyboard hints: collapsed ? button, expands on hover ── */
     #kb-hints {
       position: fixed; bottom: 24px; left: 24px;
+      z-index: 350; pointer-events: auto;
+      display: flex; align-items: flex-end; gap: 0;
+    }
+    #kb-trigger {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.18);
+      backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center;
+      cursor: default;
+      font-size: 17px; font-weight: 700; color: rgba(255,255,255,.9);
+      opacity: 1;
+      transition: opacity .2s;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    #kb-hints:hover #kb-trigger { opacity: 1; }
+    #kb-panel {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 0;
       display: flex; flex-direction: column; gap: 4px;
-      opacity: 0.45; transition: opacity .2s;
-      z-index: 500; pointer-events: auto;
-      background: rgba(0,0,0,.25);
-      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.4);
+      border: 1px solid rgba(255,255,255,.14);
       border-radius: 12px;
       padding: 10px 14px;
-      backdrop-filter: blur(16px);
-      min-width: 220px;
+      backdrop-filter: blur(20px);
+      min-width: 100px;
+      max-width: min(100px, calc(100vw - 48px - var(--aside-w, 0px)));
+      opacity: 0; pointer-events: none;
+      transform: translateY(6px);
+      transition: opacity .2s, transform .2s;
+      white-space: nowrap;
     }
-    #kb-hints:hover { opacity: 1; }
+    #kb-panel.visible {
+      opacity: 1; pointer-events: auto;
+      transform: translateY(0);
+    }
+    #kb-hints:hover #kb-panel {
+      opacity: 1; pointer-events: auto;
+      transform: translateY(0);
+    }
     .kb-title {
       font-size: 9px; font-weight: 700; letter-spacing: .8px;
       color: rgba(255,255,255,.35); text-transform: uppercase;
@@ -537,7 +608,7 @@
       font-size: 12px; color: rgba(255,255,255,.9);
     }
     .kb-row span { color: rgba(255,255,255,.55); flex: 1; white-space: nowrap; }
-    .kb-icons { display: flex; gap: 3px; flex-shrink: 0; width: 58px; align-items: center; }
+    .kb-icons { display: flex; gap: 3px; flex-shrink: 0; width: 58px; min-width: 58px; align-items: center; overflow: hidden; }
     .kb-icon {
       width: 22px; height: 22px; flex-shrink: 0;
       display: inline-flex; align-items: center; justify-content: center;
@@ -552,8 +623,8 @@
       background: rgba(255,255,255,.13);
       border: 1px solid rgba(255,255,255,.28);
       border-radius: 6px;
-      font-family: inherit; font-size: 11px; font-weight: 700;
-      color: rgba(255,255,255,.95);
+      font-family: inherit; font-size: 11px; font-weight: 400;
+      color: rgba(255,255,255,.65);
       backdrop-filter: blur(10px);
       box-shadow: 0 1px 0 rgba(255,255,255,.18) inset;
       white-space: nowrap;
@@ -599,7 +670,7 @@
     #alias-btns button {
       padding: 7px 18px; border: none; border-radius: 8px;
       font-size: 13px; font-weight: 600; font-family: inherit;
-      cursor: pointer; transition: background .15s;
+      cursor: pointer; transition: background-color .15s;
     }
     #alias-cancel  { background: rgba(255,255,255,.1); color: rgba(255,255,255,.7); }
     #alias-cancel:hover  { background: rgba(255,255,255,.2); }
@@ -626,9 +697,9 @@
     @keyframes t-in  { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
     @keyframes t-out { from{opacity:1} to{opacity:0;transform:translateY(-6px)} }
 
-    /* ───── RESPONSIVE ───── */
-    @media (max-width: 720px) {
-      .main { grid-template-columns: 1fr; padding: 14px; gap: 14px; align-items: start; }
+    /* ───── RESPONSIVE 720px ───── */
+    @media (max-width: 720px) and (min-width: 601px) {
+      .main { grid-template-columns: 1fr; padding: 14px; gap: 14px; align-items: stretch; overflow: hidden; }
       .header-inner { padding: 10px 14px; }
       .player-bar-outer { padding: 0 14px; }
       .theme-label { display: none; }
@@ -636,6 +707,262 @@
       #fav-list { max-height: 260px; min-height: 0; }
       #results-list { max-height: 50vh; }
     }
+
+    /* ═══════════════════════════════════════
+       MOBILE  ≤ 600px
+    ═══════════════════════════════════════ */
+    @media (max-width: 600px) {
+
+      /* ── App shell ── */
+      .app {
+        height: 100dvh;
+        display: flex; flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* ── Header ── */
+      header { position: relative; z-index: 200; }
+      .header-inner { padding: 10px 14px; }
+      .logo { font-size: 14px; }
+      .theme-label { display: none; }
+
+      /* ── Player bar outer: fixed bottom, above tab-bar ── */
+      .player-bar-outer {
+        position: fixed;
+        bottom: 56px; /* tab-bar height */
+        left: 0; right: 0;
+        padding: 0;
+        z-index: 300;
+      }
+      .player-bar {
+        border-radius: 0;
+        border-left: none; border-right: none;
+        padding: 10px 14px;
+        gap: 10px;
+        flex-wrap: nowrap;
+      }
+      /* Hide spectrum on mobile */
+      #spectrum { display: none !important; }
+      /* Compact avatar */
+      .station-avatar { width: 38px; height: 38px; font-size: 18px; }
+      /* Station info */
+      .station-info { flex: 1; min-width: 0; max-width: none; }
+      .station-name { font-size: 13px; }
+      .station-meta { margin-top: 2px; }
+      /* Controls: play + vol icon only */
+      .controls { gap: 6px; }
+      /* Hide volume slider on mobile (use popover) */
+      #volume { display: none; }
+      /* Vol icon becomes tap target */
+      #vol-icon { cursor: pointer; }
+
+      /* ── Volume popover ── */
+      #vol-popover {
+        position: fixed;
+        bottom: calc(56px + 64px + 8px);
+        right: 14px;
+        width: 44px;
+        background: rgba(20,15,50,.92);
+        border: 1px solid rgba(255,255,255,.2);
+        border-radius: 12px;
+        padding: 12px 0;
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+        z-index: 400;
+        backdrop-filter: blur(20px);
+        box-shadow: 0 4px 24px rgba(0,0,0,.4);
+        transition: opacity .2s, transform .2s;
+      }
+      #vol-popover.hidden { opacity: 0; pointer-events: none; transform: translateY(8px); }
+      #vol-popover-label { font-size: 10px; color: rgba(255,255,255,.5); }
+      #vol-slider-v {
+        writing-mode: vertical-lr;
+        direction: rtl;
+        -webkit-appearance: slider-vertical;
+        appearance: slider-vertical;
+        width: 4px; height: 100px;
+        cursor: pointer;
+        accent-color: var(--a2);
+      }
+
+      /* ── Main area: flex:1, no grid ── */
+      .main {
+        display: flex !important;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 0 !important;
+        gap: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        margin: 0 !important;
+        /* leave room for fixed player-bar + tab-bar */
+        padding-bottom: calc(56px + 64px) !important;
+        overflow: hidden;
+        box-sizing: border-box;
+      }
+
+      /* ── Tab panes ── */
+      .mobile-tab-pane {
+        flex: 1; min-height: 0;
+        display: flex !important; flex-direction: column;
+        overflow: hidden;
+        width: 100%; box-sizing: border-box;
+      }
+      .mobile-tab-pane.hidden { display: none !important; }
+
+      /* Aside & right-panel: fill pane */
+      aside, .right-panel {
+        flex: 1; min-height: 0;
+        display: flex; flex-direction: column;
+        width: 100%; box-sizing: border-box;
+        overflow: hidden;
+        gap: 0 !important;
+      }
+      aside .glass-card, .right-panel .glass-card {
+        flex: 1; min-height: 0;
+        border-radius: 0;
+        border-left: none; border-right: none; border-bottom: none;
+        width: 100%; box-sizing: border-box;
+        overflow: hidden;
+      }
+      #fav-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; }
+      #results-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; }
+
+      /* Search wrap: full width, no rounded border, thick borders for separation */
+      .search-wrap {
+        border-radius: 0 !important;
+        border-left: none !important; border-right: none !important;
+        position: sticky; top: 0; z-index: 10;
+        width: 100%; box-sizing: border-box;
+        margin: 0 !important;
+        padding: 0 !important;
+        border-top: 2px solid rgba(255,255,255,.18) !important;
+        border-bottom: 2px solid rgba(255,255,255,.18) !important;
+      }
+      .search-wrap input { width: 100%; box-sizing: border-box; }
+      /* Search input: symmetric, tighter padding, no border (wrap handles it) */
+      #search-input {
+        padding-top: 10px !important;
+        padding-bottom: 10px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+
+      /* Card header on mobile: compact padding, unified height */
+      .card-header {
+        padding: 10px 12px !important;
+        min-height: 52px;
+      }
+
+      /* ── Station items: taller touch targets ── */
+      .station-item {
+        min-height: 60px;
+        padding: 8px 10px;
+        width: 100%; box-sizing: border-box;
+        overflow: hidden;
+      }
+      .si-body { min-width: 0; flex: 1; overflow: hidden; }
+      .si-avatar { width: 36px; height: 36px; font-size: 16px; flex-shrink: 0; }
+      /* Compact action buttons on mobile — fixed width, no shrink */
+      .si-actions {
+        position: static !important;
+        transform: none !important;
+        flex-direction: row;
+        background: none !important;
+        border-left: none !important;
+        padding: 0 !important;
+        gap: 1px;
+        flex-shrink: 0;
+      }
+      .btn-icon { width: 28px; height: 28px; border-radius: 7px; flex-shrink: 0; }
+      /* Drag handle hidden on mobile */
+      .drag-handle { display: none; }
+
+      /* ── Tab Bar ── */
+      #mobile-tabs {
+        display: flex;
+        position: fixed; bottom: 0; left: 0; right: 0;
+        height: 56px;
+        background: rgba(15,10,40,.92);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border-top: 1px solid rgba(255,255,255,.12);
+        z-index: 350;
+      }
+      .tab-btn {
+        flex: 1;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 3px;
+        background: none; border: none; cursor: pointer;
+        color: rgba(255,255,255,.45);
+        font-size: 10px; font-weight: 600; font-family: inherit;
+        transition: color .15s;
+        position: relative;
+      }
+      .tab-btn.active { color: var(--a2); }
+      .tab-btn.active::after {
+        content: '';
+        position: absolute; bottom: 0; left: 25%; right: 25%;
+        height: 2px; border-radius: 2px;
+        background: var(--a2);
+      }
+      .tab-btn svg { width: 20px; height: 20px; }
+
+      /* ── Hide kb-hints on mobile ── */
+      #kb-hints { display: none !important; }
+      /* ── Show mobile help button in header ── */
+      #btn-mobile-help { display: flex; }
+
+      /* ── Alias dialog full-width ── */
+      #alias-dialog { width: calc(100vw - 32px); max-width: none; }
+
+      /* ── Mobile Help Panel (lightweight popup, top-right) ── */
+      #mobile-help-panel {
+        position: fixed;
+        top: 56px; /* below header */
+        right: 14px;
+        z-index: 9000;
+        background: rgba(0,0,0,.55);
+        border: 1px solid rgba(255,255,255,.14);
+        border-radius: 12px;
+        padding: 10px 14px;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        min-width: 200px;
+        display: flex; flex-direction: column; gap: 4px;
+        white-space: nowrap;
+        opacity: 0; pointer-events: none;
+        transform: translateX(12px) translateY(-6px);
+        transform-origin: top right;
+        transition: opacity .2s, transform .2s;
+      }
+      #mobile-help-panel.visible {
+        opacity: 1; pointer-events: auto;
+        transform: translateX(0) translateY(0);
+      }
+
+      /* ── Toast: avoid tab-bar + player-bar ── */
+      #toast-wrap { bottom: calc(56px + 64px + 12px); right: 12px; }
+
+      /* ── Add custom form full-width ── */
+      #add-custom-form > div { padding: 10px; }
+
+      /* ── Disable custom cursor ── */
+      #cursor-dot, #cursor-ring { display: none !important; }
+    }
+    /* ── Touch optimization: remove hover effects on touch devices ── */
+    @media (hover: none) {
+      .station-item:hover { background: transparent; }
+      .btn-icon:hover, .icon-btn:hover { background: transparent; opacity: 1; }
+      .station-item:active { background: rgba(255,255,255,.12); }
+      .btn-icon:active, .icon-btn:active { opacity: 0.7; }
+      /* Bigger touch targets */
+      .btn-icon { min-width: 36px; min-height: 36px; }
+      .icon-btn { min-width: 36px; min-height: 36px; }
+      .station-item { cursor: default; }
+    }
+    /* END MOBILE */
 
     audio { display: none; }
 
@@ -664,6 +991,9 @@
     <div class="theme-picker">
       <span class="theme-label">主题</span>
       <div class="theme-swatches" id="theme-swatches"></div>
+      <button id="btn-mobile-help" onclick="toggleMobileHelp()" title="操作说明">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
     </div>
   </div>
 </header>
@@ -689,19 +1019,21 @@
       <input type="range" id="volume" min="0" max="100" value="50" style="--val:50%" />
     </div>
     <audio id="audio"></audio>
-  </div>
-</div>
+  </div><!-- end player-bar -->
+</div><!-- end player-bar-outer -->
 
 <!-- ── Main ── -->
 <div class="main">
+  <!-- Mobile pane: favorites -->
+  <div class="mobile-tab-pane" id="pane-fav">
   <aside>
     <div class="glass-card">
       <div class="card-header">
         <div class="card-header-title"><span>收藏</span></div>
-        <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+        <div class="card-header-actions">
           <span class="count-badge" id="fav-count">0</span>
-          <button class="btn-icon" id="btn-add-custom" title="手动添加电台" style="width:24px;height:24px;border-radius:6px">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <button class="btn-header" id="btn-add-custom" title="手动添加电台">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           </button>
         </div>
       </div>
@@ -724,7 +1056,10 @@
       </div>
     </div>
   </aside>
+  </div><!-- end pane-fav -->
 
+  <!-- Mobile pane: search -->
+  <div class="mobile-tab-pane hidden" id="pane-search">
   <div class="right-panel">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
@@ -733,17 +1068,70 @@
     <div class="glass-card" id="results-wrap">
       <div class="card-header">
         <div class="card-header-title" id="results-title"><span>热门频道</span></div>
-        <span class="count-badge" id="res-count">—</span>
+        <div class="card-header-actions">
+          <span class="count-badge" id="res-count">—</span>
+        </div>
       </div>
       <div id="results-list">
         <div class="state-block"><div class="loader-ring"></div>正在加载热门频道…</div>
       </div>
     </div>
-  </div>
+  </div><!-- end right-panel -->
+  </div><!-- end pane-search -->
+
+</div><!-- end main -->
+
+<div id="toast-wrap"></div>
+
+</div><!-- end .app -->
+
+<!-- ── Mobile Tab Bar ── -->
+<nav id="mobile-tabs" style="display:none">
+  <button class="tab-btn active" id="tab-fav" onclick="switchTab('fav')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    收藏
+  </button>
+  <button class="tab-btn" id="tab-search" onclick="switchTab('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    搜索
+  </button>
+</nav>
+
+<!-- ── Mobile Help Panel ── -->
+<div id="mobile-help-panel">
+    <div class="kb-title">收藏操作</div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>
+      <span>收藏 / 取消收藏</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span></div>
+      <span>设置备注名</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons">
+        <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></span>
+        <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg></span>
+      </div>
+      <span>置顶 / 取消置顶</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+      <span>手动添加电台</span>
+    </div>
+    <div class="kb-sep"></div>
+    <div class="kb-title">其他</div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg></span></div>
+      <span>切换主题色</span>
+    </div>
 </div>
 
+<!-- ── Mobile Volume Popover ── -->
+<div id="vol-popover" class="hidden">
+  <span id="vol-popover-label">音量</span>
+  <input type="range" id="vol-slider-v" min="0" max="100" value="50" orient="vertical" />
 </div>
-<div id="toast-wrap"></div>
 
 <!-- Alias dialog -->
 <div id="alias-overlay" style="display:none">
@@ -760,39 +1148,44 @@
 
 <!-- ── Keyboard hints ── -->
 <div id="kb-hints">
-  <div class="kb-title">快捷键</div>
-  <div class="kb-row"><div class="kb-icons"><kbd>Space</kbd></div><span>播放 / 暂停</span></div>
-  <div class="kb-row"><div class="kb-icons"><kbd>↑</kbd><kbd>↓</kbd></div><span>切换收藏频道</span></div>
-  <div class="kb-sep"></div>
-  <div class="kb-title">收藏操作</div>
-  <div class="kb-row">
-    <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>
-    <span>收藏 / 取消收藏</span>
-  </div>
-  <div class="kb-row">
-    <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span></div>
-    <span>设置备注名</span>
-  </div>
-  <div class="kb-row">
-    <div class="kb-icons">
-      <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></span>
-      <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg></span>
+  <!-- Collapsed: ? button -->
+  <div id="kb-trigger">?</div>
+  <!-- Expanded panel (shown on hover) -->
+  <div id="kb-panel">
+    <div class="kb-title">快捷键</div>
+    <div class="kb-row"><div class="kb-icons"><span class="kb-icon" style="min-width:44px;width:44px;font-size:10px;letter-spacing:-.5px;">Space</span></div><span>播放 / 暂停</span></div>
+    <div class="kb-row"><div class="kb-icons"><span class="kb-icon">↑</span><span class="kb-icon">↓</span></div><span>切换收藏频道</span></div>
+    <div class="kb-sep"></div>
+    <div class="kb-title">收藏操作</div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span></div>
+      <span>收藏 / 取消收藏</span>
     </div>
-    <span>置顶 / 取消置顶</span>
-  </div>
-  <div class="kb-row">
-    <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></span></div>
-    <span>拖动排序</span>
-  </div>
-  <div class="kb-row">
-    <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
-    <span>手动添加电台</span>
-  </div>
-  <div class="kb-sep"></div>
-  <div class="kb-title">其他</div>
-  <div class="kb-row">
-    <div class="kb-icons"><span class="kb-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg></span></div>
-    <span>右上角切换主题色</span>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span></div>
+      <span>设置备注名</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons">
+        <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 11 12 6 7 11"/><polyline points="17 18 12 13 7 18"/></svg></span>
+        <span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7 13 12 18 17 13"/><polyline points="7 6 12 11 17 6"/></svg></span>
+      </div>
+      <span>置顶 / 取消置顶</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></span></div>
+      <span>拖动排序</span>
+    </div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span></div>
+      <span>手动添加电台</span>
+    </div>
+    <div class="kb-sep"></div>
+    <div class="kb-title">其他</div>
+    <div class="kb-row">
+      <div class="kb-icons"><span class="kb-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg></span></div>
+      <span>切换主题色</span>
+    </div>
   </div>
 </div>
 
@@ -800,16 +1193,10 @@
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
 const THEMES = [
   {
-    id:'indigo', label:'靛蓝',
-    a1:'#6366f1', a2:'#a5b4fc', ag:'rgba(99,102,241,.45)',
-    mesh: ['#0f0c29','#1a1650','#1e1b5e','#2d2a7a','#0a0820'],
-    blobs: ['#6366f1','#818cf8','#38bdf8','#c084fc'],
-  },
-  {
-    id:'sky', label:'天空',
-    a1:'#0ea5e9', a2:'#7dd3fc', ag:'rgba(14,165,233,.4)',
-    mesh: ['#020f1a','#04213a','#053858','#064b72','#010c14'],
-    blobs: ['#0ea5e9','#38bdf8','#818cf8','#06b6d4'],
+    id:'dark', label:'暗黑',
+    a1:'#64748b', a2:'#cbd5e1', ag:'rgba(100,116,139,.45)',
+    mesh: ['#080808','#101010','#181818','#111111','#050505'],
+    blobs: ['#334155','#475569','#64748b','#94a3b8'],
   },
   {
     id:'mint', label:'薄荷',
@@ -1032,6 +1419,18 @@ function animateBg() {
 
   const now     = Date.now();
   const playing = state.status === 'playing' || state.status === 'loading';
+  // On mobile, reduce bg animation to ~20fps to save battery
+  const isMobileEnv = window.matchMedia && window.matchMedia('(max-width:480px)').matches;
+  if (isMobileEnv) {
+    // Only draw every ~50ms
+    if (!animateBg._lastDraw || now - animateBg._lastDraw > 50) {
+      animateBg._lastDraw = now;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBg();
+    }
+    requestAnimationFrame(animateBg);
+    return;
+  }
 
   // Adaptive spawn interval
   const baseInt = playing ? Math.max(60, 450 - energy * 280 - beatPulse * 180) : 4000;
@@ -1110,10 +1509,7 @@ function applyTheme(id) {
   root.style.setProperty('--a2', t.a2);
   root.style.setProperty('--ag', t.ag);
 
-  // Logo SVG color follows --a2 CSS var automatically
-
   // Update custom cursor color
-  const fill   = encodeURIComponent(t.a1);
   const stroke = 'white';
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path d='M5 2l14 9-7.5 1.5L8 20z' fill='${t.a1}' stroke='${stroke}' stroke-width='1'/></svg>`;
   const cursorUrl = `url("data:image/svg+xml,${encodeURIComponent(svg)}")  5 2, auto`;
@@ -1806,7 +2202,7 @@ function initThemes() {
     btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
   });
   const saved = loadTheme();
-  applyTheme(saved && THEMES.find(x => x.id === saved) ? saved : 'violet');
+  applyTheme(saved && THEMES.find(x => x.id === saved) ? saved : 'dark');
 }
 
 /* ═══════════ INIT ═══════════ */
@@ -1920,6 +2316,188 @@ function initThemes() {
   document.addEventListener('mouseleave', () => { dot.style.opacity = '0'; ring.style.opacity = '0'; });
   document.addEventListener('mouseenter', () => { dot.style.opacity = ''; ring.style.opacity = ''; });
 })();
+
+/* ═══════════ MOBILE ADAPTATION ═══════════ */
+(function initMobile() {
+  const isMobile = () => window.matchMedia('(max-width: 600px)').matches;
+
+  /* ── 1. Tab Bar visibility & switching ── */
+  const tabNav   = document.getElementById('mobile-tabs');
+  const paneMap  = { fav: 'pane-fav', search: 'pane-search' };
+  let activeTab  = 'fav';
+
+  function showTabBar() { if (tabNav) tabNav.style.display = 'flex'; }
+  function hideTabBar() { if (tabNav) tabNav.style.display = 'none'; }
+
+  window.switchTab = function(name) {
+    if (!paneMap[name]) return;
+    activeTab = name;
+    Object.keys(paneMap).forEach(k => {
+      const pane = document.getElementById(paneMap[k]);
+      const btn  = document.getElementById('tab-' + k);
+      if (pane) pane.classList.toggle('hidden', k !== name);
+      if (btn)  btn.classList.toggle('active', k === name);
+    });
+    // Auto-focus search input when switching to search tab
+    if (name === 'search') {
+      const si = document.getElementById('search-input');
+      if (si) setTimeout(() => si.focus(), 50);
+    }
+  };
+
+  /* ── 2. Volume popover ── */
+  const volPopover  = document.getElementById('vol-popover');
+  const volSliderV  = document.getElementById('vol-slider-v');
+  const volIcon     = document.getElementById('vol-icon');
+  const volSlider   = document.getElementById('volume'); // desktop slider
+
+  // Sync vertical slider ↔ desktop slider
+  if (volSlider && volSliderV) {
+    volSliderV.value = volSlider.value;
+    volSlider.addEventListener('input', () => { volSliderV.value = volSlider.value; });
+    volSliderV.addEventListener('input', () => {
+      volSlider.value = volSliderV.value;
+      volSlider.dispatchEvent(new Event('input'));
+    });
+  }
+
+  let volOpen = false;
+  function openVolPopover()  { volOpen = true;  if (volPopover) volPopover.classList.remove('hidden'); }
+  function closeVolPopover() { volOpen = false; if (volPopover) volPopover.classList.add('hidden'); }
+
+  if (volIcon) {
+    volIcon.addEventListener('click', e => {
+      if (!isMobile()) return;
+      e.stopPropagation();
+      volOpen ? closeVolPopover() : openVolPopover();
+    });
+  }
+  document.addEventListener('click', e => {
+    if (!isMobile() || !volOpen) return;
+    if (volPopover && !volPopover.contains(e.target)) closeVolPopover();
+  });
+
+  /* ── 3. Swipe-to-reveal on fav list ── */
+  const FAV_LIST = document.getElementById('fav-list');
+  let swipedEl = null;
+
+  function closeSwiped() {
+    if (swipedEl) { swipedEl.classList.remove('swiped'); swipedEl = null; }
+  }
+
+  // Delegate touch events on fav-list
+  if (FAV_LIST) {
+    let startX = 0, startY = 0, startScrollTop = 0, tracking = false, moved = false;
+
+    FAV_LIST.addEventListener('touchstart', e => {
+      const item = e.target.closest('.station-item');
+      if (!item || !isMobile()) return;
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY;
+      startScrollTop = FAV_LIST.scrollTop;
+      tracking = true; moved = false;
+    }, { passive: true });
+
+    FAV_LIST.addEventListener('touchmove', e => {
+      if (!tracking || !isMobile()) return;
+      const t = e.touches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      // If mostly vertical, let scroll happen
+      if (Math.abs(dy) > Math.abs(dx) + 8) { tracking = false; return; }
+      moved = true;
+    }, { passive: true });
+
+    FAV_LIST.addEventListener('touchend', e => {
+      if (!tracking || !isMobile()) { tracking = false; return; }
+      const item = e.changedTouches[0];
+      const dx = item.clientX - startX;
+      const itemEl = e.target.closest('.station-item');
+      if (!moved || !itemEl) { tracking = false; return; }
+
+      if (dx < -40) {
+        // Swipe left → reveal
+        closeSwiped();
+        itemEl.classList.add('swiped');
+        swipedEl = itemEl;
+      } else if (dx > 40) {
+        // Swipe right → close
+        closeSwiped();
+      }
+      tracking = false;
+    }, { passive: true });
+
+    // Tap elsewhere to close swipe
+    FAV_LIST.addEventListener('click', e => {
+      if (!isMobile()) return;
+      const item = e.target.closest('.station-item');
+      if (swipedEl && item !== swipedEl) { closeSwiped(); }
+    });
+  }
+
+  /* ── 4. Responsive init / resize ── */
+  function onResize() {
+    if (isMobile()) {
+      showTabBar();
+      // Ensure active pane is shown
+      switchTab(activeTab);
+      closeVolPopover();
+    } else {
+      hideTabBar();
+      // Restore both panes
+      ['pane-fav', 'pane-search'].forEach(id => {
+        const p = document.getElementById(id);
+        if (p) p.classList.remove('hidden');
+      });
+      // Constrain kb-panel width to not overlap the aside (left column)
+      const aside = document.querySelector('aside');
+      const panel = document.getElementById('kb-panel');
+      if (aside && panel) {
+        const asideRect = aside.getBoundingClientRect();
+        // panel starts at left:24px, keep 12px gap before aside right edge
+        const maxW = Math.max(160, asideRect.right - 24 - 12);
+        panel.style.maxWidth = maxW + 'px';
+      }
+    }
+  }
+
+  window.addEventListener('resize', onResize);
+  onResize(); // run once on load
+})();
+
+/* ═══════════ KB-PANEL hover fix (bridge gap between trigger and panel) ═══════════ */
+(function() {
+  const hints   = document.getElementById('kb-hints');
+  const panel   = document.getElementById('kb-panel');
+  let hideTimer = null;
+
+  function showPanel()   { clearTimeout(hideTimer); panel.classList.add('visible'); }
+  function scheduleHide(){ hideTimer = setTimeout(() => panel.classList.remove('visible'), 120); }
+
+  hints.addEventListener('mouseenter', showPanel);
+  hints.addEventListener('mouseleave', scheduleHide);
+  panel.addEventListener('mouseenter', showPanel);
+  panel.addEventListener('mouseleave', scheduleHide);
+})();
+
+/* ═══════════ MOBILE HELP PANEL ═══════════ */
+function toggleMobileHelp() {
+  const panel   = document.getElementById('mobile-help-panel');
+  const btnHelp = document.getElementById('btn-mobile-help');
+  const isOpen  = panel.classList.contains('visible');
+  panel.classList.toggle('visible', !isOpen);
+  if (btnHelp) btnHelp.style.color = isOpen ? '' : 'var(--a2)';
+}
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+  const panel = document.getElementById('mobile-help-panel');
+  const btn   = document.getElementById('btn-mobile-help');
+  if (panel && panel.classList.contains('visible') &&
+      !panel.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    panel.classList.remove('visible');
+    if (btn) btn.style.color = '';
+  }
+});
 </script>
 </body>
 </html>
