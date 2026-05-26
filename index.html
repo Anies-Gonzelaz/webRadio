@@ -2648,42 +2648,91 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
   el.textContent = APP_VERSION;
 });
 
-/* ═══════════ iOS SAFE AREA BOTTOM FIX ═══════════ */
+/* ═══════════ iOS SAFE AREA / VIEWPORT FIX ═══════════ */
 (function() {
-  function setSafeArea() {
-    const probe = document.createElement('div');
+
+  // ── Debug overlay (remove after diagnosis) ──
+  var dbg = document.createElement('div');
+  dbg.id = 'pwa-debug';
+  dbg.style.cssText = [
+    'position:fixed',
+    'top:80px',
+    'left:8px',
+    'right:8px',
+    'z-index:99999',
+    'background:rgba(0,0,0,.85)',
+    'color:#0f0',
+    'font:12px/1.5 monospace',
+    'padding:8px',
+    'border-radius:8px',
+    'pointer-events:none',
+    'white-space:pre'
+  ].join(';');
+  document.body.appendChild(dbg);
+
+  function updateDebug() {
+    var vv = window.visualViewport;
+    var sab = getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-bottom)');
+    // measure safe area via probe
+    var probe = document.createElement('div');
     probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
     document.body.appendChild(probe);
-    const sab = probe.offsetHeight || 0;
+    var sabPx = probe.offsetHeight;
+    document.body.removeChild(probe);
+
+    var tabBar = document.getElementById('mobile-tabs');
+    var tabRect = tabBar ? tabBar.getBoundingClientRect() : null;
+
+    dbg.textContent = [
+      'screen: ' + screen.width + 'x' + screen.height,
+      'window.innerH: ' + window.innerHeight,
+      'vv.height: ' + (vv ? vv.height : 'n/a'),
+      'vv.offsetTop: ' + (vv ? vv.offsetTop : 'n/a'),
+      'sab probe: ' + sabPx + 'px',
+      '--sab: ' + getComputedStyle(document.documentElement).getPropertyValue('--sab'),
+      '--app-vh: ' + getComputedStyle(document.documentElement).getPropertyValue('--app-vh'),
+      'standalone: ' + (window.navigator.standalone || false),
+      tabRect ? 'tab bottom: ' + tabRect.bottom + ' (screen.h=' + screen.height + ')' : 'no tab bar',
+      tabRect ? 'tab top: ' + tabRect.top + ' h:' + tabRect.height.toFixed(1) : ''
+    ].join('\n');
+  }
+
+  function setSafeArea() {
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
+    document.body.appendChild(probe);
+    var sab = probe.offsetHeight || 0;
     document.body.removeChild(probe);
     document.documentElement.style.setProperty('--sab', sab + 'px');
   }
 
   function setViewportMetrics() {
-    const vv = window.visualViewport;
-    const vh = Math.round((vv ? vv.height : window.innerHeight) * 100) / 100;
+    var vv = window.visualViewport;
+    // Use screen.height for PWA standalone to get true full-screen height
+    var isStandalone = window.navigator.standalone === true;
+    var vh;
+    if (isStandalone) {
+      // In PWA mode, window.innerHeight already equals the full usable height
+      // Don't use visualViewport.height as it may exclude safe areas
+      vh = window.innerHeight;
+    } else {
+      vh = Math.round((vv ? vv.height : window.innerHeight) * 100) / 100;
+    }
     document.documentElement.style.setProperty('--app-vh', vh + 'px');
+    updateDebug();
   }
 
   function settleViewport() {
     setSafeArea();
     setViewportMetrics();
-    requestAnimationFrame(() => {
+    requestAnimationFrame(function() {
       setSafeArea();
       setViewportMetrics();
     });
-    setTimeout(() => {
-      setSafeArea();
-      setViewportMetrics();
-    }, 60);
-    setTimeout(() => {
-      setSafeArea();
-      setViewportMetrics();
-    }, 180);
-    setTimeout(() => {
-      setSafeArea();
-      setViewportMetrics();
-    }, 360);
+    setTimeout(function() { setSafeArea(); setViewportMetrics(); }, 60);
+    setTimeout(function() { setSafeArea(); setViewportMetrics(); }, 180);
+    setTimeout(function() { setSafeArea(); setViewportMetrics(); }, 500);
+    setTimeout(function() { setSafeArea(); setViewportMetrics(); }, 1000);
   }
 
   settleViewport();
@@ -2691,10 +2740,8 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
   window.addEventListener('resize', settleViewport);
   window.addEventListener('orientationchange', settleViewport);
   window.addEventListener('pageshow', settleViewport);
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      settleViewport();
-    }
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) settleViewport();
   });
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', setViewportMetrics);
