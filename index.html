@@ -1212,7 +1212,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.5';
+const APP_VERSION = 'v1.0.7';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
@@ -1910,11 +1910,26 @@ async function searchAPI(q) {
 
 /* ═══════════ SEARCH ═══════════ */
 let dbt;
-document.getElementById('search-input').addEventListener('input', e => {
+const searchInput = document.getElementById('search-input');
+searchInput.addEventListener('input', e => {
   clearTimeout(dbt);
   const q = e.target.value.trim();
   if (!q) { setTitle('热门频道'); loadTop(); return; }
   dbt = setTimeout(() => doSearch(q), 380);
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    clearTimeout(dbt);
+    const q = e.target.value.trim();
+    if (!q) {
+      e.target.blur();
+      loadTop();
+      return;
+    }
+    doSearch(q);
+    e.target.blur();
+  }
 });
 
 async function doSearch(q) {
@@ -1936,10 +1951,12 @@ function renderResults(list) {
   resCount.textContent = list.length;
   if (!list.length) {
     resultsList.innerHTML = `<div class="state-block"><span class="state-icon">📭</span>没有找到相关电台</div>`;
+    if (document.activeElement === searchInput) searchInput.blur();
     return;
   }
   resultsList.innerHTML = list.map(stationHtml).join('');
   bindEvents(resultsList, false);
+  if (document.activeElement === searchInput) searchInput.blur();
 }
 
 function stationHtml(s) {
@@ -2444,11 +2461,6 @@ function initThemes() {
       if (pane) pane.classList.toggle('hidden', k !== name);
       if (btn)  btn.classList.toggle('active', k === name);
     });
-    // Auto-focus search input when switching to search tab
-    if (name === 'search') {
-      const si = document.getElementById('search-input');
-      if (si) setTimeout(() => si.focus(), 50);
-    }
   };
 
   /* ── 2. Volume popover ── */
@@ -2613,11 +2625,6 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
 /* ═══════════ iOS SAFE AREA BOTTOM FIX ═══════════ */
 (function() {
   function setSafeArea() {
-    // Compare window.innerHeight vs screen layout to detect home-indicator height
-    const safeFromCSS = parseInt(
-      getComputedStyle(document.documentElement).getPropertyValue('--sab') || '0'
-    );
-    // Read the actual env() value via a temp element
     const probe = document.createElement('div');
     probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
     document.body.appendChild(probe);
@@ -2625,8 +2632,42 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
     document.body.removeChild(probe);
     document.documentElement.style.setProperty('--sab', sab + 'px');
   }
-  setSafeArea();
-  window.addEventListener('resize', setSafeArea);
+
+  function settleSafeArea() {
+    setSafeArea();
+    requestAnimationFrame(setSafeArea);
+    setTimeout(setSafeArea, 60);
+    setTimeout(setSafeArea, 180);
+    setTimeout(setSafeArea, 360);
+  }
+
+  function blurInitialInputs() {
+    const active = document.activeElement;
+    if (active && /INPUT|TEXTAREA|SELECT/.test(active.tagName)) {
+      active.blur();
+    }
+    const si = document.getElementById('search-input');
+    if (si) si.blur();
+  }
+
+  settleSafeArea();
+  blurInitialInputs();
+
+  window.addEventListener('resize', settleSafeArea);
+  window.addEventListener('pageshow', () => {
+    settleSafeArea();
+    blurInitialInputs();
+  });
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      settleSafeArea();
+      blurInitialInputs();
+    }
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', settleSafeArea);
+    window.visualViewport.addEventListener('scroll', settleSafeArea);
+  }
 })();
 </script>
 </body>
