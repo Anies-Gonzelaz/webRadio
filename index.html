@@ -528,7 +528,7 @@
     }
     #search-input {
       width: 100%; padding: 12px 13px 12px 40px;
-      background: rgba(255,255,255,.14);
+      background: var(--glass);
       backdrop-filter: blur(24px);
       border: 1px solid var(--stroke);
       border-radius: var(--r);
@@ -537,9 +537,9 @@
       box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 4px 16px rgba(0,0,0,.1);
     }
     #search-input:focus {
-      background: rgba(255,255,255,.2);
-      border-color: rgba(255,255,255,.5);
-      box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 0 0 3px rgba(255,255,255,.1);
+      background: var(--glass2);
+      border-color: var(--a2);
+      box-shadow: 0 1px 0 rgba(255,255,255,.3) inset, 0 0 0 3px var(--ag);
     }
     #search-input::placeholder { color: rgba(255,255,255,.45); }
 
@@ -1148,6 +1148,8 @@
       <div class="kb-icons"><span class="kb-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg></span></div>
       <span>切换主题色</span>
     </div>
+    <div class="kb-sep"></div>
+    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.0</div>
 </div>
 
 <!-- ── Mobile Volume Popover ── -->
@@ -1209,6 +1211,8 @@
       <div class="kb-icons"><span class="kb-icon"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="10"/></svg></span></div>
       <span>切换主题色</span>
     </div>
+    <div class="kb-sep"></div>
+    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.0</div>
   </div>
 </div>
 
