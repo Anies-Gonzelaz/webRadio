@@ -756,8 +756,9 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        /* Always 56px above viewport bottom (tab bar touch zone = 56px) */
-        bottom: 56px;
+        /* Tab bar is in the physical zone below viewport (bottom: -screen-gap).
+           Player bar sits at viewport bottom = 0 from vp bottom. */
+        bottom: 0;
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -787,7 +788,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + 64px + 8px);
+        bottom: calc(64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -823,8 +824,8 @@
         max-width: 100% !important;
         width: 100% !important;
         margin: 0 !important;
-        /* leave room for fixed player-bar + tab-bar */
-        padding-bottom: calc(56px + 64px) !important;
+        /* leave room for player-bar only (tab bar is below viewport) */
+        padding-bottom: 64px !important;
         box-sizing: border-box;
       }
 
@@ -905,41 +906,35 @@
 
       /* ── Tab Bar ── */
       /*
-       * Push tab bar to physical screen bottom using --screen-gap.
-       * Background is applied only to the 56px button zone via ::before,
-       * so the area below buttons (home indicator zone) is transparent.
+       * iOS PWA: viewport bottom = 812px, screen bottom = 874px.
+       * Tab bar occupies the 62px gap at the very bottom of the screen.
+       * bottom: -screen-gap pushes it below the layout viewport so it
+       * renders in the physical home-indicator zone.
+       * Height = screen-gap so it fills exactly that zone.
+       * NOTE: touch events DO work in this zone on iOS PWA.
        */
       #mobile-tabs {
         display: flex;
         position: fixed;
         bottom: calc(-1 * var(--screen-gap, 0px));
         left: 0; right: 0;
-        height: calc(56px + var(--screen-gap, 0px));
-        padding-bottom: var(--screen-gap, 0px);
-        background: transparent;
-        z-index: 350;
-        align-items: flex-start;
-      }
-      /* Visible background + blur only on the 56px button area */
-      #mobile-tabs::before {
-        content: '';
-        position: absolute;
-        top: 0; left: 0; right: 0;
-        height: 56px;
+        height: var(--screen-gap, 56px);
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
-        z-index: -1;
+        z-index: 350;
+        align-items: center;
+        justify-content: space-around;
       }
       .tab-btn {
         flex: 1;
-        height: 56px;
+        height: 100%;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        gap: 3px;
+        gap: 2px;
         background: none; border: none; cursor: pointer;
         color: rgba(255,255,255,.45);
-        font-size: 10px; font-weight: 600; font-family: inherit;
+        font-size: 9px; font-weight: 600; font-family: inherit;
         transition: color .15s;
         position: relative;
       }
@@ -950,7 +945,7 @@
         height: 2px; border-radius: 2px;
         background: var(--a2);
       }
-      .tab-btn svg { width: 20px; height: 20px; }
+      .tab-btn svg { width: 18px; height: 18px; }
 
       /* ── Hide kb-hints on mobile ── */
       #kb-hints { display: none !important; }
@@ -986,7 +981,7 @@
       }
 
       /* ── Toast: avoid tab-bar + player-bar ── */
-      #toast-wrap { bottom: calc(56px + 64px + 12px); right: 12px; }
+      #toast-wrap { bottom: calc(64px + 12px); right: 12px; }
 
       /* ── Add custom form full-width ── */
       #add-custom-form > div { padding: 10px; }
@@ -1238,7 +1233,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.15';
+const APP_VERSION = 'v1.0.16';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
