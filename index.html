@@ -368,6 +368,12 @@
     }
     .custom-input:focus { border-color: var(--a2); background: rgba(255,255,255,.13); }
     .custom-input::placeholder { color: rgba(255,255,255,.38); }
+    .app-version {
+      text-align: center;
+      font-size: 10px;
+      opacity: .4;
+      letter-spacing: .5px;
+    }
     .btn-custom-action {
       flex: 1; padding: 6px 0; border-radius: 8px; border: none; cursor: pointer;
       font-size: 12px; font-weight: 600; font-family: inherit;
@@ -742,7 +748,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        bottom: 56px; /* tab-bar visual height only; safe-area is painted, not reserved */
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -772,7 +778,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + 64px + 8px);
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -809,7 +815,7 @@
         width: 100% !important;
         margin: 0 !important;
         /* leave room for fixed player-bar + tab-bar */
-        padding-bottom: calc(56px + 64px) !important;
+        padding-bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px) !important;
         overflow: hidden;
         box-sizing: border-box;
       }
@@ -896,25 +902,18 @@
       #mobile-tabs {
         display: flex;
         position: fixed; bottom: 0; left: 0; right: 0;
-        height: 56px;
-        padding-bottom: 0;
+        height: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
+        padding: 0 0 var(--sab, env(safe-area-inset-bottom, 0px)) 0;
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
-      }
-      /* Fill home-indicator safe area below tab bar without affecting layout */
-      #mobile-tabs::after {
-        content: '';
-        position: fixed;
-        bottom: 0; left: 0; right: 0;
-        height: var(--sab, env(safe-area-inset-bottom, 0px));
-        background: rgba(15,10,40,.92);
-        z-index: 349;
+        align-items: stretch;
       }
       .tab-btn {
         flex: 1;
+        min-height: 56px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: 3px;
         background: none; border: none; cursor: pointer;
@@ -1149,7 +1148,7 @@
       <span>切换主题色</span>
     </div>
     <div class="kb-sep"></div>
-    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.2</div>
+    <div class="app-version" data-version-slot></div>
 </div>
 
 <!-- ── Mobile Volume Popover ── -->
@@ -1212,12 +1211,13 @@
       <span>切换主题色</span>
     </div>
     <div class="kb-sep"></div>
-    <div style="text-align:center;font-size:10px;opacity:.4;letter-spacing:.5px;">v1.0.2</div>
+    <div class="app-version" data-version-slot></div>
   </div>
 </div>
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
+const APP_VERSION = 'v1.0.4';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
@@ -2608,6 +2608,11 @@ document.addEventListener('click', function(e) {
     panel.classList.remove('visible');
     if (btn) btn.style.color = '';
   }
+});
+
+// Render version labels from a single source of truth
+Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
+  el.textContent = APP_VERSION;
 });
 
 /* ═══════════ iOS SAFE AREA BOTTOM FIX ═══════════ */
