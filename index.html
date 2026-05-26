@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { margin: 0; padding: 0; width: 100%; overscroll-behavior: none; background: #0a0520; }
+    html, body { margin: 0; padding: 0; width: 100%; background: #0a0520; }
 
     :root {
       --a1: #6366f1;  /* primary accent — overwritten by JS */
@@ -60,9 +60,9 @@
 
     .app {
       position: relative; z-index: 1;
-      display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
+      display: flex; flex-direction: column;
+      min-height: 100dvh;
       width: 100%; align-self: stretch;
-      overscroll-behavior: none;
     }
 
     /* ───── Glass mixin ───── */
@@ -734,9 +734,8 @@
 
       /* ── App shell ── */
       .app {
-        height: 100dvh;
+        min-height: 100dvh;
         display: flex; flex-direction: column;
-        overflow: hidden;
       }
 
       /* ── Header ── */
@@ -816,7 +815,6 @@
         margin: 0 !important;
         /* leave room for fixed player-bar + tab-bar */
         padding-bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px) !important;
-        overflow: hidden;
         box-sizing: border-box;
       }
 
@@ -824,7 +822,6 @@
       .mobile-tab-pane {
         flex: 1; min-height: 0;
         display: flex !important; flex-direction: column;
-        overflow: hidden;
         width: 100%; box-sizing: border-box;
       }
       .mobile-tab-pane.hidden { display: none !important; }
@@ -834,7 +831,6 @@
         flex: 1; min-height: 0;
         display: flex; flex-direction: column;
         width: 100%; box-sizing: border-box;
-        overflow: hidden;
         gap: 0 !important;
       }
       aside .glass-card, .right-panel .glass-card {
@@ -842,10 +838,9 @@
         border-radius: 0;
         border-left: none; border-right: none; border-bottom: none;
         width: 100%; box-sizing: border-box;
-        overflow: hidden;
       }
-      #fav-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; }
-      #results-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; }
+      #fav-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+      #results-list { flex: 1; min-height: 0; overflow-y: auto; max-height: none; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 
       /* Search wrap: full width, no rounded border, thick borders for separation */
       .search-wrap {
@@ -1217,7 +1212,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.4';
+const APP_VERSION = 'v1.0.5';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
