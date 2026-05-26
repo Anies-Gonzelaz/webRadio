@@ -757,7 +757,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
+        bottom: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -787,7 +787,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
+        bottom: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -824,7 +824,7 @@
         width: 100% !important;
         margin: 0 !important;
         /* leave room for tab-bar (56px + safe-area) + player-bar (~64px) */
-        padding-bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px) !important;
+        padding-bottom: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px) !important;
         box-sizing: border-box;
       }
 
@@ -908,25 +908,22 @@
         display: flex;
         position: fixed;
         bottom: 0; left: 0; right: 0;
-        /* Use JS-measured gap (--screen-gap) as padding-bottom so the
-           tab bar background covers the home indicator zone.
-           Fallback: env(safe-area-inset-bottom) for non-PWA browsers. */
-        height: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
+        height: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
         padding-bottom: var(--screen-gap, env(safe-area-inset-bottom, 0px));
-        background: rgba(15,10,40,.92);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border-top: 1px solid rgba(255,255,255,.12);
+        background: var(--glass);
+        backdrop-filter: saturate(180%) blur(28px);
+        -webkit-backdrop-filter: saturate(180%) blur(28px);
+        border-top: 1px solid var(--stroke2);
         z-index: 350;
         align-items: flex-start;
       }
       .tab-btn {
         flex: 1;
-        height: 56px;
+        height: 48px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: 3px;
         background: none; border: none; cursor: pointer;
-        color: rgba(255,255,255,.45);
+        color: var(--text-muted);
         font-size: 10px; font-weight: 600; font-family: inherit;
         transition: color .15s;
         position: relative;
@@ -938,7 +935,7 @@
         height: 2px; border-radius: 2px;
         background: var(--a2);
       }
-      .tab-btn svg { width: 20px; height: 20px; }
+      .tab-btn svg { width: 18px; height: 18px; }
 
       /* ── Hide kb-hints on mobile ── */
       #kb-hints { display: none !important; }
@@ -974,7 +971,7 @@
       }
 
       /* ── Toast: avoid tab-bar + player-bar ── */
-      #toast-wrap { bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 12px); right: 12px; }
+      #toast-wrap { bottom: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 12px); right: 12px; }
 
       /* ── Add custom form full-width ── */
       #add-custom-form > div { padding: 10px; }
