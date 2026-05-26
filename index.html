@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WebRadio" />
@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { margin: 0; padding: 0; width: 100%; overflow: hidden; overscroll-behavior: none; touch-action: pan-x pan-y; }
+    html, body { margin: 0; padding: 0; width: 100%; overscroll-behavior: none; }
 
     :root {
       --a1: #6366f1;  /* primary accent — overwritten by JS */
@@ -57,7 +57,7 @@
 
     .app {
       position: relative; z-index: 1;
-      display: flex; flex-direction: column; height: var(--real-vh, 100dvh); overflow: hidden;
+      display: flex; flex-direction: column; height: 100dvh; overflow: hidden;
       width: 100%; align-self: stretch;
       overscroll-behavior: none;
     }
@@ -725,7 +725,7 @@
 
       /* ── App shell ── */
       .app {
-        height: var(--real-vh, 100dvh);
+        height: 100dvh;
         display: flex; flex-direction: column;
         overflow: hidden;
       }
@@ -1622,7 +1622,7 @@ function playStation(s) {
   audio.volume = getVol();
   setStatus('loading');
   updateBar();
-  audio.load();
+  // Do NOT call audio.load() before play() on iOS — it breaks the user gesture chain
   const p = audio.play();
   if (p && p.catch) p.catch(() => setStatus('error'));
 }
@@ -2509,20 +2509,6 @@ document.addEventListener('click', function(e) {
     if (btn) btn.style.color = '';
   }
 });
-
-/* ═══════════ REAL VIEWPORT HEIGHT FIX (iOS PWA bottom gap) ═══════════ */
-(function() {
-  function setVH() {
-    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    document.documentElement.style.setProperty('--real-vh', h + 'px');
-  }
-  setVH();
-  window.addEventListener('resize', setVH);
-  if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', setVH);
-    window.visualViewport.addEventListener('scroll', setVH);
-  }
-})();
 </script>
 </body>
 </html>
