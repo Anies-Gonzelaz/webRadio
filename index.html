@@ -52,7 +52,10 @@
 
     /* ───── Dynamic mesh background ───── */
     #bg-canvas {
-      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      position: fixed; inset: 0;
+      /* extend below safe area to cover home-indicator gap */
+      bottom: calc(-1 * env(safe-area-inset-bottom, 20px));
+      z-index: 0; pointer-events: none;
     }
 
     .app {
@@ -900,6 +903,8 @@
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
+        /* extend background into home-indicator zone */
+        box-shadow: 0 calc(env(safe-area-inset-bottom, 20px) + 20px) 0 0 rgba(15,10,40,.92);
       }
       .tab-btn {
         flex: 1;
@@ -1686,6 +1691,9 @@ function setStatus(s) {
   refreshBadges();
 }
 
+// PWA icon data URL for Media Session artwork
+const _pwaIconHref = (document.querySelector('link[rel="apple-touch-icon"]') || {}).href || '';
+
 function updateBar() {
   const s = state.current; if (!s) return;
   // Update inner span for marquee support
@@ -1701,6 +1709,21 @@ function updateBar() {
   const isFav = state.favorites.some(f => f.stationuuid === s.stationuuid);
   btnFavCur.textContent = isFav ? '★' : '☆';
   btnFavCur.classList.toggle('active', isFav);
+  // Media Session — controls Dynamic Island / lock screen artwork
+  if ('mediaSession' in navigator) {
+    const artwork = [];
+    if (_pwaIconHref) artwork.push({ src: _pwaIconHref, sizes: '512x512', type: 'image/png' });
+    if (s.favicon) artwork.push({ src: s.favicon, sizes: '96x96' });
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: s.alias || s.name,
+      artist: s.country || s.tags || 'WebRadio',
+      album: 'WebRadio',
+      artwork
+    });
+    navigator.mediaSession.setActionHandler('play',  () => { audio.play(); });
+    navigator.mediaSession.setActionHandler('pause', () => { audio.pause(); });
+    navigator.mediaSession.setActionHandler('stop',  () => { audio.pause(); });
+  }
 }
 
 const btnFavCur = document.getElementById('btn-fav-cur');
