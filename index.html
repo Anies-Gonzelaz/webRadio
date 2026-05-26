@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="WebRadio" />
@@ -735,14 +735,26 @@
     @media (max-width: 600px) {
 
       /* ── App shell ── */
-      html, body {
-        height: var(--app-vh);
-        overflow: hidden;
+      /*
+       * CRITICAL iOS PWA FIX:
+       * Do NOT put overflow:hidden on html/body — on iOS it causes
+       * position:fixed elements to be clipped to the html/body box
+       * instead of the real viewport, creating a bottom gap.
+       * Lock scrolling on .app instead.
+       */
+      html {
+        height: -webkit-fill-available;
+        height: 100dvh;
+        overscroll-behavior: none;
+      }
+      body {
+        height: 100%;
+        overscroll-behavior: none;
       }
 
       .app {
-        min-height: var(--app-vh);
-        height: var(--app-vh);
+        height: 100%;
+        min-height: 100%;
         display: flex; flex-direction: column;
         overflow: hidden;
       }
@@ -906,18 +918,20 @@
       #mobile-tabs {
         display: flex;
         position: fixed; bottom: 0; left: 0; right: 0;
+        /* Background extends under home indicator */
         height: calc(56px + env(safe-area-inset-bottom, 0px));
-        padding: 0 0 env(safe-area-inset-bottom, 0px) 0;
+        padding-bottom: env(safe-area-inset-bottom, 0px);
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
-        align-items: stretch;
+        /* flex items fill the 56px touch zone only */
+        align-items: flex-start;
       }
       .tab-btn {
         flex: 1;
-        min-height: 56px;
+        height: 56px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         gap: 3px;
         background: none; border: none; cursor: pointer;
@@ -929,7 +943,7 @@
       .tab-btn.active { color: var(--a2); }
       .tab-btn.active::after {
         content: '';
-        position: absolute; bottom: 0; left: 25%; right: 25%;
+        position: absolute; top: 0; left: 25%; right: 25%;
         height: 2px; border-radius: 2px;
         background: var(--a2);
       }
@@ -1221,7 +1235,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.12';
+const APP_VERSION = 'v1.0.13';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
