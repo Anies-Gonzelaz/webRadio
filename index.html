@@ -17,6 +17,8 @@
     html, body { margin: 0; padding: 0; width: 100%; background: #0a0520; }
 
     :root {
+      --app-vh: 100dvh;
+      --keyboard-offset: 0px;
       --a1: #6366f1;  /* primary accent — overwritten by JS */
       --a2: #a5b4fc;  /* secondary accent */
       --ag: rgba(99,102,241,.45);
@@ -43,7 +45,7 @@
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      min-height: 100dvh;
+      min-height: var(--app-vh);
       overflow-x: hidden;
       color: var(--text);
       margin: 0; padding: 0;
@@ -61,7 +63,7 @@
     .app {
       position: relative; z-index: 1;
       display: flex; flex-direction: column;
-      min-height: 100dvh;
+      min-height: var(--app-vh);
       width: 100%; align-self: stretch;
     }
 
@@ -733,9 +735,16 @@
     @media (max-width: 600px) {
 
       /* ── App shell ── */
+      html, body {
+        height: var(--app-vh);
+        overflow: hidden;
+      }
+
       .app {
-        min-height: 100dvh;
+        min-height: var(--app-vh);
+        height: var(--app-vh);
         display: flex; flex-direction: column;
+        overflow: hidden;
       }
 
       /* ── Header ── */
@@ -747,7 +756,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + var(--keyboard-offset, 0px));
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -777,7 +786,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
+        bottom: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)) + 64px + 8px + var(--keyboard-offset, 0px));
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -896,7 +905,7 @@
       /* ── Tab Bar ── */
       #mobile-tabs {
         display: flex;
-        position: fixed; bottom: 0; left: 0; right: 0;
+        position: fixed; bottom: var(--keyboard-offset, 0px); left: 0; right: 0;
         height: calc(56px + var(--sab, env(safe-area-inset-bottom, 0px)));
         padding: 0 0 var(--sab, env(safe-area-inset-bottom, 0px)) 0;
         background: rgba(15,10,40,.92);
@@ -1212,7 +1221,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.9';
+const APP_VERSION = 'v1.0.10';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
@@ -1914,21 +1923,26 @@ const searchInput = document.getElementById('search-input');
 searchInput.addEventListener('input', e => {
   clearTimeout(dbt);
   const q = e.target.value.trim();
-  if (!q) { setTitle('热门频道'); loadTop(); return; }
-  dbt = setTimeout(() => doSearch(q), 380);
+  if (!q) {
+    setTitle('热门频道');
+    loadTop();
+    return;
+  }
+  dbt = setTimeout(() => {
+    doSearch(q);
+  }, 380);
 });
 searchInput.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
     e.preventDefault();
     clearTimeout(dbt);
     const q = e.target.value.trim();
+    e.target.blur();
     if (!q) {
-      e.target.blur();
       loadTop();
       return;
     }
     doSearch(q);
-    e.target.blur();
   }
 });
 
@@ -1951,12 +1965,10 @@ function renderResults(list) {
   resCount.textContent = list.length;
   if (!list.length) {
     resultsList.innerHTML = `<div class="state-block"><span class="state-icon">📭</span>没有找到相关电台</div>`;
-    if (document.activeElement === searchInput) searchInput.blur();
     return;
   }
   resultsList.innerHTML = list.map(stationHtml).join('');
   bindEvents(resultsList, false);
-  if (document.activeElement === searchInput) searchInput.blur();
 }
 
 function stationHtml(s) {
@@ -2633,40 +2645,51 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
     document.documentElement.style.setProperty('--sab', sab + 'px');
   }
 
-  function settleSafeArea() {
+  function setViewportMetrics() {
+    const vv = window.visualViewport;
+    const vh = Math.round((vv ? vv.height : window.innerHeight) * 100) / 100;
+    document.documentElement.style.setProperty('--app-vh', vh + 'px');
+
+    const keyboardOffset = vv
+      ? Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))
+      : 0;
+    document.documentElement.style.setProperty('--keyboard-offset', keyboardOffset + 'px');
+  }
+
+  function settleViewport() {
     setSafeArea();
-    requestAnimationFrame(setSafeArea);
-    setTimeout(setSafeArea, 60);
-    setTimeout(setSafeArea, 180);
-    setTimeout(setSafeArea, 360);
+    setViewportMetrics();
+    requestAnimationFrame(() => {
+      setSafeArea();
+      setViewportMetrics();
+    });
+    setTimeout(() => {
+      setSafeArea();
+      setViewportMetrics();
+    }, 60);
+    setTimeout(() => {
+      setSafeArea();
+      setViewportMetrics();
+    }, 180);
+    setTimeout(() => {
+      setSafeArea();
+      setViewportMetrics();
+    }, 360);
   }
 
-  function blurInitialInputs() {
-    const active = document.activeElement;
-    if (active && /INPUT|TEXTAREA|SELECT/.test(active.tagName)) {
-      active.blur();
-    }
-    const si = document.getElementById('search-input');
-    if (si) si.blur();
-  }
+  settleViewport();
 
-  settleSafeArea();
-  blurInitialInputs();
-
-  window.addEventListener('resize', settleSafeArea);
-  window.addEventListener('pageshow', () => {
-    settleSafeArea();
-    blurInitialInputs();
-  });
+  window.addEventListener('resize', settleViewport);
+  window.addEventListener('orientationchange', settleViewport);
+  window.addEventListener('pageshow', settleViewport);
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) {
-      settleSafeArea();
-      blurInitialInputs();
+      settleViewport();
     }
   });
   if (window.visualViewport) {
-    window.visualViewport.addEventListener('resize', settleSafeArea);
-    window.visualViewport.addEventListener('scroll', settleSafeArea);
+    window.visualViewport.addEventListener('resize', setViewportMetrics);
+    window.visualViewport.addEventListener('scroll', setViewportMetrics);
   }
 })();
 </script>
