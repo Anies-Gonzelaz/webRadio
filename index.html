@@ -14,7 +14,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { margin: 0; padding: 0; width: 100%; background: #0a0520; }
+    html, body { margin: 0; padding: 0; width: 100%; background: #0a0520;
+      /* Zone-2 fill: the area below layout viewport (home indicator zone) shows
+         this color. JS updates --bg-base via theme changes so it matches the app. */
+      background-color: var(--bg-base, #0a0520);
+    }
 
     :root {
       --app-vh: 100dvh;
@@ -908,14 +912,16 @@
         display: flex;
         position: fixed;
         bottom: 0; left: 0; right: 0;
+        /* screen-gap as padding-TOP: buttons sink to the bottom 48px (zone 1),
+           glass background extends upward to fill the space above. */
         height: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
-        padding-bottom: var(--screen-gap, env(safe-area-inset-bottom, 0px));
+        padding-top: var(--screen-gap, env(safe-area-inset-bottom, 0px));
         background: var(--glass);
         backdrop-filter: saturate(180%) blur(28px);
         -webkit-backdrop-filter: saturate(180%) blur(28px);
         border-top: 1px solid var(--stroke2);
         z-index: 350;
-        align-items: flex-start;
+        align-items: flex-end;
       }
       .tab-btn {
         flex: 1;
@@ -1230,18 +1236,21 @@ const THEMES = [
     a1:'#64748b', a2:'#cbd5e1', ag:'rgba(100,116,139,.45)',
     mesh: ['#080808','#101010','#181818','#111111','#050505'],
     blobs: ['#334155','#475569','#64748b','#94a3b8'],
+    bg: '#080808',
   },
   {
     id:'mint', label:'薄荷',
     a1:'#10b981', a2:'#6ee7b7', ag:'rgba(16,185,129,.4)',
     mesh: ['#011c12','#033226','#054f3a','#066547','#010d09'],
     blobs: ['#10b981','#34d399','#0ea5e9','#a3e635'],
+    bg: '#011c12',
   },
   {
     id:'rose', label:'珊瑚',
     a1:'#f43f5e', a2:'#fda4af', ag:'rgba(244,63,94,.4)',
     mesh: ['#1a020b','#370519','#560523','#6e1030','#110108'],
     blobs: ['#f43f5e','#fb7185','#c084fc','#f97316'],
+    bg: '#1a020b',
   },
 ];
 let currentTheme = THEMES[0];
@@ -1541,6 +1550,9 @@ function applyTheme(id) {
   root.style.setProperty('--a1', t.a1);
   root.style.setProperty('--a2', t.a2);
   root.style.setProperty('--ag', t.ag);
+  // Zone-2 fill: area below layout viewport matches theme darkest mesh color
+  root.style.setProperty('--bg-base', t.bg || t.mesh[0]);
+  document.body.style.backgroundColor = t.bg || t.mesh[0];
 
   // Update custom cursor color
   const stroke = 'white';
