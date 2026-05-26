@@ -41,12 +41,12 @@
       --rx:  6px;
     }
 
-    html { scroll-behavior: smooth; overflow-x: hidden; }
+    html { scroll-behavior: smooth; overflow-x: hidden; height: 100%; }
 
     body {
       font-family: 'Inter', -apple-system, sans-serif;
-      min-height: var(--app-vh);
-      overflow-x: hidden;
+      height: 100dvh;
+      overflow: hidden;
       color: var(--text);
       margin: 0; padding: 0;
       width: 100%; box-sizing: border-box;
@@ -63,8 +63,9 @@
     .app {
       position: relative; z-index: 1;
       display: flex; flex-direction: column;
-      min-height: var(--app-vh);
+      height: 100%;
       width: 100%; align-self: stretch;
+      overflow: hidden;
     }
 
     /* ───── Glass mixin ───── */
@@ -756,9 +757,7 @@
       /* ── Player bar outer: fixed bottom, above tab-bar ── */
       .player-bar-outer {
         position: fixed;
-        /* Tab bar is in the physical zone below viewport (bottom: -screen-gap).
-           Player bar sits at viewport bottom = 0 from vp bottom. */
-        bottom: 0;
+        bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
         left: 0; right: 0;
         padding: 0;
         z-index: 300;
@@ -788,7 +787,7 @@
       /* ── Volume popover ── */
       #vol-popover {
         position: fixed;
-        bottom: calc(64px + 8px);
+        bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 8px);
         right: 14px;
         width: 44px;
         background: rgba(20,15,50,.92);
@@ -824,8 +823,8 @@
         max-width: 100% !important;
         width: 100% !important;
         margin: 0 !important;
-        /* leave room for player-bar only (tab bar is below viewport) */
-        padding-bottom: 64px !important;
+        /* leave room for tab-bar (56px + safe-area) + player-bar (~64px) */
+        padding-bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px) !important;
         box-sizing: border-box;
       }
 
@@ -905,47 +904,41 @@
       .drag-handle { display: none; }
 
       /* ── Tab Bar ── */
-      /*
-       * iOS PWA: viewport bottom = 812px, screen bottom = 874px.
-       * Tab bar occupies the 62px gap at the very bottom of the screen.
-       * bottom: -screen-gap pushes it below the layout viewport so it
-       * renders in the physical home-indicator zone.
-       * Height = screen-gap so it fills exactly that zone.
-       * NOTE: touch events DO work in this zone on iOS PWA.
-       */
       #mobile-tabs {
         display: flex;
         position: fixed;
-        bottom: calc(-1 * var(--screen-gap, 0px));
-        left: 0; right: 0;
-        height: var(--screen-gap, 56px);
+        bottom: 0; left: 0; right: 0;
+        /* Use JS-measured gap (--screen-gap) as padding-bottom so the
+           tab bar background covers the home indicator zone.
+           Fallback: env(safe-area-inset-bottom) for non-PWA browsers. */
+        height: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
+        padding-bottom: var(--screen-gap, env(safe-area-inset-bottom, 0px));
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
         z-index: 350;
-        align-items: center;
-        justify-content: space-around;
+        align-items: flex-start;
       }
       .tab-btn {
         flex: 1;
-        height: 100%;
+        height: 56px;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        gap: 2px;
+        gap: 3px;
         background: none; border: none; cursor: pointer;
         color: rgba(255,255,255,.45);
-        font-size: 9px; font-weight: 600; font-family: inherit;
+        font-size: 10px; font-weight: 600; font-family: inherit;
         transition: color .15s;
         position: relative;
       }
       .tab-btn.active { color: var(--a2); }
       .tab-btn.active::after {
         content: '';
-        position: absolute; bottom: 0; left: 25%; right: 25%;
+        position: absolute; top: 0; left: 25%; right: 25%;
         height: 2px; border-radius: 2px;
         background: var(--a2);
       }
-      .tab-btn svg { width: 18px; height: 18px; }
+      .tab-btn svg { width: 20px; height: 20px; }
 
       /* ── Hide kb-hints on mobile ── */
       #kb-hints { display: none !important; }
@@ -981,7 +974,7 @@
       }
 
       /* ── Toast: avoid tab-bar + player-bar ── */
-      #toast-wrap { bottom: calc(64px + 12px); right: 12px; }
+      #toast-wrap { bottom: calc(56px + var(--screen-gap, env(safe-area-inset-bottom, 0px)) + 64px + 12px); right: 12px; }
 
       /* ── Add custom form full-width ── */
       #add-custom-form > div { padding: 10px; }
@@ -1233,7 +1226,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.16';
+const APP_VERSION = 'v1.0.17';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
@@ -2649,24 +2642,26 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
 /* ═══════════ iOS PWA SCREEN GAP FIX ═══════════
  * In iOS PWA (standalone) mode, position:fixed bottom:0 stops at
  * window.innerHeight, NOT the physical screen bottom (screen.height).
- * We measure this gap and apply it as --screen-gap so the tab bar
- * can extend to the true screen edge.
+ * The difference (--screen-gap) is used to extend the tab bar background
+ * so it covers the home indicator zone with no visible gap.
+ * In regular Safari, screen.height ≈ window.innerHeight so gap ≈ 0.
  * ════════════════════════════════════════════ */
 (function() {
+  var isMobile = window.matchMedia('(max-width: 600px)').matches;
+
   function setMetrics() {
-    // Only apply the screen-gap trick on iOS PWA standalone
-    var isStandalone = window.navigator.standalone === true;
-    var gap = 0;
-    if (isStandalone) {
-      gap = Math.max(0, screen.height - window.innerHeight);
-      // Sanity check: cap at 120px CSS pixels
-      if (gap > 120) gap = 0;
-    }
+    // Measure actual gap: how much screen is below the layout viewport
+    var gap = Math.max(0, screen.height - window.innerHeight);
+    // Sanity check: desktop browsers often report screen.height in physical px,
+    // making gap unreasonably large (>200). Clamp to 0 in that case.
+    if (gap > 200) gap = 0;
+
     document.documentElement.style.setProperty('--screen-gap', gap + 'px');
 
-    // --app-vh: use window.innerHeight (reliable on both Safari and PWA)
-    var vh = window.innerHeight;
-    document.documentElement.style.setProperty('--app-vh', vh + 'px');
+    // --app-vh: only override on mobile; desktop uses the CSS default (100dvh)
+    if (isMobile) {
+      document.documentElement.style.setProperty('--app-vh', window.innerHeight + 'px');
+    }
   }
 
   setMetrics();
@@ -2675,7 +2670,10 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
   setTimeout(setMetrics, 300);
   setTimeout(setMetrics, 600);
 
-  window.addEventListener('resize', setMetrics);
+  window.addEventListener('resize', function() {
+    isMobile = window.matchMedia('(max-width: 600px)').matches;
+    setMetrics();
+  });
   window.addEventListener('orientationchange', function() {
     setTimeout(setMetrics, 100);
     setTimeout(setMetrics, 300);
