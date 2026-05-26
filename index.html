@@ -55,8 +55,8 @@
     /* ───── Dynamic mesh background ───── */
     #bg-canvas {
       position: fixed; inset: 0;
-      /* extend below safe area to cover home-indicator gap */
-      bottom: calc(-1 * env(safe-area-inset-bottom, 20px));
+      /* extend below layout viewport to cover home-indicator zone */
+      bottom: calc(-1 * var(--screen-gap, env(safe-area-inset-bottom, 20px)));
       z-index: 0; pointer-events: none;
     }
 
@@ -735,26 +735,14 @@
     @media (max-width: 600px) {
 
       /* ── App shell ── */
-      /*
-       * CRITICAL iOS PWA FIX:
-       * Do NOT put overflow:hidden on html/body — on iOS it causes
-       * position:fixed elements to be clipped to the html/body box
-       * instead of the real viewport, creating a bottom gap.
-       * Lock scrolling on .app instead.
-       */
-      html {
-        height: -webkit-fill-available;
-        height: 100dvh;
-        overscroll-behavior: none;
-      }
-      body {
-        height: 100%;
-        overscroll-behavior: none;
+      html, body {
+        height: var(--app-vh, 100dvh);
+        overflow: hidden;
       }
 
       .app {
-        height: 100%;
-        min-height: 100%;
+        min-height: var(--app-vh, 100dvh);
+        height: var(--app-vh, 100dvh);
         display: flex; flex-direction: column;
         overflow: hidden;
       }
@@ -917,10 +905,9 @@
 
       /* ── Tab Bar ── */
       /*
-       * iOS PWA FIX: position:fixed bottom:0 stops at layout viewport bottom
-       * (window.innerHeight), NOT the physical screen bottom. The gap between
-       * them (screen.height - window.innerHeight) is set as --screen-gap by JS.
-       * We shift the bar down by --screen-gap so it truly reaches screen bottom.
+       * Push tab bar to physical screen bottom using --screen-gap.
+       * Background is applied only to the 56px button zone via ::before,
+       * so the area below buttons (home indicator zone) is transparent.
        */
       #mobile-tabs {
         display: flex;
@@ -929,12 +916,21 @@
         left: 0; right: 0;
         height: calc(56px + var(--screen-gap, 0px));
         padding-bottom: var(--screen-gap, 0px);
+        background: transparent;
+        z-index: 350;
+        align-items: flex-start;
+      }
+      /* Visible background + blur only on the 56px button area */
+      #mobile-tabs::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 56px;
         background: rgba(15,10,40,.92);
         backdrop-filter: blur(24px);
         -webkit-backdrop-filter: blur(24px);
         border-top: 1px solid rgba(255,255,255,.12);
-        z-index: 350;
-        align-items: flex-start;
+        z-index: -1;
       }
       .tab-btn {
         flex: 1;
@@ -950,7 +946,7 @@
       .tab-btn.active { color: var(--a2); }
       .tab-btn.active::after {
         content: '';
-        position: absolute; top: 0; left: 25%; right: 25%;
+        position: absolute; bottom: 0; left: 25%; right: 25%;
         height: 2px; border-radius: 2px;
         background: var(--a2);
       }
@@ -1242,7 +1238,7 @@
 
 <script>
 /* ═══════════ THEMES (mesh background palettes) ═══════════ */
-const APP_VERSION = 'v1.0.14';
+const APP_VERSION = 'v1.0.15';
 const THEMES = [
   {
     id:'dark', label:'暗黑',
@@ -2655,95 +2651,46 @@ Array.from(document.querySelectorAll('[data-version-slot]')).forEach(el => {
   el.textContent = APP_VERSION;
 });
 
-/* ═══════════ iOS SAFE AREA / VIEWPORT FIX ═══════════ */
+/* ═══════════ iOS PWA SCREEN GAP FIX ═══════════
+ * In iOS PWA (standalone) mode, position:fixed bottom:0 stops at
+ * window.innerHeight, NOT the physical screen bottom (screen.height).
+ * We measure this gap and apply it as --screen-gap so the tab bar
+ * can extend to the true screen edge.
+ * ════════════════════════════════════════════ */
 (function() {
-
-  // ── Debug overlay (remove after diagnosis) ──
-  var dbg = document.createElement('div');
-  dbg.id = 'pwa-debug';
-  dbg.style.cssText = [
-    'position:fixed',
-    'top:80px',
-    'left:8px',
-    'right:8px',
-    'z-index:99999',
-    'background:rgba(0,0,0,.85)',
-    'color:#0f0',
-    'font:12px/1.5 monospace',
-    'padding:8px',
-    'border-radius:8px',
-    'pointer-events:none',
-    'white-space:pre'
-  ].join(';');
-  document.body.appendChild(dbg);
-
-  function updateDebug() {
-    var vv = window.visualViewport;
-    var probe = document.createElement('div');
-    probe.style.cssText = 'position:fixed;bottom:0;left:0;width:1px;height:env(safe-area-inset-bottom,0px);pointer-events:none;visibility:hidden;';
-    document.body.appendChild(probe);
-    var sabPx = probe.offsetHeight;
-    document.body.removeChild(probe);
-
-    var tabBar = document.getElementById('mobile-tabs');
-    var tabRect = tabBar ? tabBar.getBoundingClientRect() : null;
-
-    dbg.textContent = [
-      'screen: ' + screen.width + 'x' + screen.height,
-      'window.innerH: ' + window.innerHeight,
-      'vv.height: ' + (vv ? vv.height : 'n/a'),
-      'sab probe: ' + sabPx + 'px',
-      '--screen-gap: ' + getComputedStyle(document.documentElement).getPropertyValue('--screen-gap'),
-      '--app-vh: ' + getComputedStyle(document.documentElement).getPropertyValue('--app-vh'),
-      'standalone: ' + (window.navigator.standalone || false),
-      tabRect ? 'tab bottom: ' + tabRect.bottom.toFixed(1) + ' (vp=' + window.innerHeight + ')' : 'no tab bar',
-      tabRect ? 'tab top: ' + tabRect.top.toFixed(1) + ' h:' + tabRect.height.toFixed(1) : ''
-    ].join('\n');
-  }
-
   function setMetrics() {
-    // --screen-gap: the gap between layout viewport and physical screen bottom
-    // In iOS PWA: position:fixed bottom:0 lands at window.innerHeight, not screen.height
-    // We push the tab bar DOWN by this gap so it truly reaches the screen edge
-    var gap = Math.max(0, screen.height - window.innerHeight);
-    // Cap at reasonable maximum (some devices report different pixel ratios)
-    // Use devicePixelRatio to convert if needed
-    // screen.height is in CSS pixels on most iOS versions, but verify:
-    var dpr = window.devicePixelRatio || 1;
-    // If gap seems way too large (> 200px CSS), it might be in physical pixels
-    if (gap > 200) gap = Math.round(gap / dpr);
-    // Still cap at a sane max
-    if (gap > 120) gap = 0; // something is wrong, don't apply
-
+    // Only apply the screen-gap trick on iOS PWA standalone
+    var isStandalone = window.navigator.standalone === true;
+    var gap = 0;
+    if (isStandalone) {
+      gap = Math.max(0, screen.height - window.innerHeight);
+      // Sanity check: cap at 120px CSS pixels
+      if (gap > 120) gap = 0;
+    }
     document.documentElement.style.setProperty('--screen-gap', gap + 'px');
 
-    var vv = window.visualViewport;
-    var vh = Math.round((vv ? vv.height : window.innerHeight) * 100) / 100;
+    // --app-vh: use window.innerHeight (reliable on both Safari and PWA)
+    var vh = window.innerHeight;
     document.documentElement.style.setProperty('--app-vh', vh + 'px');
-
-    updateDebug();
   }
 
-  function settleMetrics() {
-    setMetrics();
-    requestAnimationFrame(setMetrics);
-    setTimeout(setMetrics, 60);
-    setTimeout(setMetrics, 180);
-    setTimeout(setMetrics, 500);
-    setTimeout(setMetrics, 1000);
-  }
+  setMetrics();
+  requestAnimationFrame(setMetrics);
+  setTimeout(setMetrics, 60);
+  setTimeout(setMetrics, 300);
+  setTimeout(setMetrics, 600);
 
-  settleMetrics();
-
-  window.addEventListener('resize', settleMetrics);
-  window.addEventListener('orientationchange', settleMetrics);
-  window.addEventListener('pageshow', settleMetrics);
+  window.addEventListener('resize', setMetrics);
+  window.addEventListener('orientationchange', function() {
+    setTimeout(setMetrics, 100);
+    setTimeout(setMetrics, 300);
+  });
+  window.addEventListener('pageshow', setMetrics);
   document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) settleMetrics();
+    if (!document.hidden) setMetrics();
   });
   if (window.visualViewport) {
     window.visualViewport.addEventListener('resize', setMetrics);
-    window.visualViewport.addEventListener('scroll', setMetrics);
   }
 })();
 </script>
