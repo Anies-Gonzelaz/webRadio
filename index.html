@@ -770,7 +770,7 @@
         border-radius: 0;
         border-left: none; border-right: none; border-bottom: none;
         /* push content up above the home-indicator zone */
-        padding: 10px 14px var(--screen-gap, env(safe-area-inset-bottom, 0px));
+        padding: 10px 14px var(--screen-gap, 0px);
         gap: 10px;
         flex-wrap: nowrap;
       }
@@ -915,8 +915,8 @@
         bottom: 0; left: 0; right: 0;
         /* screen-gap as padding-TOP: buttons sink to the bottom 48px (zone 1),
            glass background extends upward to fill the space above. */
-        height: calc(48px + var(--screen-gap, env(safe-area-inset-bottom, 0px)));
-        padding-top: var(--screen-gap, env(safe-area-inset-bottom, 0px));
+        height: calc(48px + var(--screen-gap, 0px));
+        padding-top: var(--screen-gap, 0px);
         background: var(--glass);
         backdrop-filter: saturate(180%) blur(28px);
         -webkit-backdrop-filter: saturate(180%) blur(28px);
