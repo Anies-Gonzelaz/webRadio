@@ -2,7 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Texas Hold'em Odds</title>
 <style>
   :root {
@@ -30,10 +32,17 @@
     height: 100vh; height: 100dvh;
   }
 
+  /* ── INPUT PANEL 底部安全区 ── */
+  #input-panel {
+    flex-shrink: 0; background: var(--white); border-top: 2px solid var(--black);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* ── TOP BAR ── */
   #topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     background: var(--black); color: var(--white);
     flex-shrink: 0;
   }
@@ -129,7 +138,6 @@
   .hist-pct { font-weight: 900; font-size: 13px; }
 
   /* ── INPUT PANEL ── */
-  #input-panel { flex-shrink: 0; background: var(--white); border-top: 2px solid var(--black); }
 
   #hint-bar { padding: 5px 12px; font-family: "Courier New", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--gray); border-bottom: 1px solid var(--border); background: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
