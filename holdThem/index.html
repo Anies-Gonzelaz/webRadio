@@ -477,10 +477,8 @@ function placeCard(rank) {
   state.cards[group][index] = card;
   state.lastPlaced = { group, index };
 
-  // Cascade clear if replacing a card: clear downstream
-  if (group==='hand')  { clearDownstream('flop'); clearDownstream('turn'); clearDownstream('river'); }
-  if (group==='flop')  { clearDownstream('turn'); clearDownstream('river'); }
-  if (group==='turn')  { clearDownstream('river'); }
+  // Cascade clear downstream
+  cascadeDown(group);
 
   // Auto-advance to next empty slot
   const next = findNextEmptySlot(group, index);
@@ -490,11 +488,6 @@ function placeCard(rank) {
   setHint(next ? `PLACING → ${next.group.toUpperCase()} CARD ${next.index+1}` : 'ALL DONE — HIT CALCULATE');
 }
 
-function clearDownstream(group) {
-  // only clear if the group has been partially filled AND we didn't just place there
-  // Actually: just null all slots in group
-  state.cards[group] = state.cards[group].map(() => null);
-}
 
 function findNextEmptySlot(currentGroup, currentIndex) {
   const groups = ['hand','flop','turn','river'];
@@ -512,29 +505,39 @@ function findNextEmptySlot(currentGroup, currentIndex) {
 }
 
 function deleteLastCard() {
-  // Delete card in active slot if it has a card, else delete lastPlaced
-  let target = null;
+  // 优先删除当前激活槽位里的牌
   if (state.activeSlot) {
     const { group, index } = state.activeSlot;
-    if (state.cards[group][index]) target = { group, index };
+    if (state.cards[group][index]) {
+      state.cards[group][index] = null;
+      cascadeDown(group);
+      renderSlots(); updateRankBtnStates();
+      setHint(`DELETED — PLACING → ${group.toUpperCase()} #${index+1}`);
+      return;
+    }
   }
-  if (!target && state.lastPlaced) {
-    target = state.lastPlaced;
+  // 否则找最后一张有牌的槽位（逆序）
+  const order = [
+    ['river',0],['turn',0],
+    ['flop',2],['flop',1],['flop',0],
+    ['hand',1],['hand',0]
+  ];
+  for (const [g, i] of order) {
+    if (state.cards[g][i]) {
+      state.cards[g][i] = null;
+      cascadeDown(g);
+      state.activeSlot = { group: g, index: i };
+      renderSlots(); updateRankBtnStates();
+      setHint(`DELETED — PLACING → ${g.toUpperCase()} #${i+1}`);
+      return;
+    }
   }
-  if (!target) return;
+}
 
-  const { group, index } = target;
-  state.cards[group][index] = null;
-  // Cascade clear downstream
-  if (group==='hand')  { clearDownstream('flop'); clearDownstream('turn'); clearDownstream('river'); }
-  if (group==='flop')  { clearDownstream('turn'); clearDownstream('river'); }
-  if (group==='turn')  { clearDownstream('river'); }
-
-  state.lastPlaced = null;
-  state.activeSlot = { group, index }; // keep focus on deleted slot
-  renderSlots();
-  updateRankBtnStates();
-  setHint(`DELETED — PLACING → ${group.toUpperCase()} #${index+1}`);
+function cascadeDown(group) {
+  if (group === 'hand')  { state.cards.flop=[null,null,null]; state.cards.turn=[null]; state.cards.river=[null]; }
+  if (group === 'flop')  { state.cards.turn=[null]; state.cards.river=[null]; }
+  if (group === 'turn')  { state.cards.river=[null]; }
 }
 
 function isCardUsed(card, skipGroup, skipIndex) {
