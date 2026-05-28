@@ -362,7 +362,7 @@
               <div class="win-label" id="winLabel">WIN RATE</div>
             </div>
             <div id="odds-img-area">
-              <div id="odds-img-placeholder">IMAGE<br>AREA</div>
+              <img src="https://anies-gonzelaz.github.io/webTools/holdThem/kapai.png" alt="">
             </div>
           </div>
           <!-- right: history -->
@@ -870,6 +870,19 @@ function addHistory(phase,winPct) {
 }
 
 init();
+
+// ─── 禁用 Safari 双击缩放 ───
+// iOS 13+ 会忽略 user-scalable=no，用 JS 拦截双击
+;(function() {
+  let lastTap = 0;
+  document.addEventListener('touchend', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      e.preventDefault();
+    }
+    lastTap = now;
+  }, { passive: false });
+})();
 </script>
 <script type="text/javascript" src="/accessproxy_statics/h5_fp.js" defer></script>
 <script type="text/javascript" src="/accessproxy_statics/wm.js" defer></script>
