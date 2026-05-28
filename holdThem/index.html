@@ -2,7 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Texas Hold'em Odds</title>
 <style>
   :root {
@@ -20,20 +22,31 @@
 
   html, body {
     height: 100%; overflow: hidden;
-    background: var(--paper);
+    background: var(--black); /* 底部安全区背景跟 input-panel 一致，不露白 */
     font-family: "Helvetica Neue", Arial, sans-serif;
     color: var(--black);
   }
 
+  /* iOS 16 PWA fix:
+     100dvh 在 iOS standalone 模式下不含底部安全区，导致白边。
+     改用 position:fixed + inset:0 撑满物理屏幕。 */
   #app {
+    position: fixed;
+    inset: 0;
     display: flex; flex-direction: column;
-    height: 100vh; height: 100dvh;
+  }
+
+  /* ── INPUT PANEL 底部安全区 ── */
+  #input-panel {
+    flex-shrink: 0; background: var(--white); border-top: 2px solid var(--black);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 
   /* ── TOP BAR ── */
   #topbar {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
     background: var(--black); color: var(--white);
     flex-shrink: 0;
   }
@@ -56,47 +69,58 @@
     padding: 12px; display: flex; flex-direction: column; gap: 10px;
   }
 
-  /* ── CARD SLOTS — single row ── */
+  /* ── CARD SLOTS — single row, fluid width ── */
   #slots-panel {
     background: var(--white); border: 1px solid var(--border);
-    padding: 8px 8px 6px;
+    padding: 6px 6px 5px;
+    overflow: hidden;
   }
   #all-slots-row {
     display: flex;
     align-items: flex-end;
+    width: 100%;
     gap: 0;
   }
-  .slot-group {
-    display: flex; flex-direction: column;
-    /* divider between groups */
-  }
+  /* slot-group 按卡片数量占比伸缩：hand=2, flop=3, turn=1, river=1 */
+  .slot-group { display: flex; flex-direction: column; min-width: 0; }
+  #handSlots-wrap  { flex: 2; }
+  #flopSlots-wrap  { flex: 3; }
+  #turnSlots-wrap  { flex: 1; }
+  #riverSlots-wrap { flex: 1; }
+
   .slot-group + .slot-group {
     border-left: 1px solid var(--border);
-    margin-left: 5px;
-    padding-left: 5px;
+    margin-left: 3px;
+    padding-left: 3px;
   }
   .slot-group-label {
     font-family: "Courier New", monospace; font-size: 7px;
-    letter-spacing: 0.15em; text-transform: uppercase; color: var(--gray);
-    margin-bottom: 3px; white-space: nowrap;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray);
+    margin-bottom: 3px; white-space: nowrap; overflow: hidden;
   }
-  .slot-cards { display: flex; gap: 3px; }
+  .slot-cards { display: flex; gap: 2px; width: 100%; }
 
+  /* 槽位等宽：在各自 group 内 flex:1 均分，group 按牌数占比，结果每张牌等宽 */
   .card-slot {
-    width: 38px; height: 54px;
+    flex: 1; min-width: 0; overflow: hidden;
+    aspect-ratio: 0.68;
     border: 1px dashed var(--border); background: var(--white);
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     cursor: pointer; position: relative; gap: 1px;
     transition: border-color 0.08s;
-    border-radius: 2px; flex-shrink: 0;
+    border-radius: 2px;
+    container-type: inline-size;
   }
   .card-slot.target { border: 2px solid var(--accent); background: #fff3ef; }
   .card-slot.filled { border: 2px solid var(--black); }
   .card-slot.filled.red-suit { border-color: #CC2200; }
-  .card-slot .cr { font-size: 14px; font-weight: 900; line-height: 1; }
-  .card-slot .cs { font-size: 16px; line-height: 1; }
-  .card-slot .empty-num { font-size: 8px; color: var(--border); }
-  .card-slot.filled::after { content: '×'; position: absolute; top: 1px; right: 3px; font-size: 9px; color: var(--gray); font-weight: bold; }
+  .card-slot .cr { font-size: max(10px, min(17px, 36cqw)); font-weight: 900; line-height: 1; }
+  .card-slot .cs { font-size: max(9px,  min(17px, 40cqw)); line-height: 1; }
+  .card-slot .empty-num { font-size: max(7px, min(10px, 24cqw)); color: var(--border); }
+  .card-slot.filled::after {
+    content: '×'; position: absolute; top: 1px; right: 2px;
+    font-size: 8px; color: var(--gray); font-weight: bold;
+  }
 
   /* ── ODDS MAIN ── */
   #odds-main { background: var(--white); border: 1px solid var(--border); padding: 16px 14px 14px; }
@@ -129,7 +153,6 @@
   .hist-pct { font-weight: 900; font-size: 13px; }
 
   /* ── INPUT PANEL ── */
-  #input-panel { flex-shrink: 0; background: var(--white); border-top: 2px solid var(--black); }
 
   #hint-bar { padding: 5px 12px; font-family: "Courier New", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--gray); border-bottom: 1px solid var(--border); background: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -235,19 +258,19 @@
     <!-- card slots: single row -->
     <div id="slots-panel">
       <div id="all-slots-row">
-        <div class="slot-group">
+        <div class="slot-group" id="handSlots-wrap">
           <div class="slot-group-label">Hand</div>
           <div class="slot-cards" id="handSlots"></div>
         </div>
-        <div class="slot-group">
+        <div class="slot-group" id="flopSlots-wrap">
           <div class="slot-group-label">Flop</div>
           <div class="slot-cards" id="flopSlots"></div>
         </div>
-        <div class="slot-group">
+        <div class="slot-group" id="turnSlots-wrap">
           <div class="slot-group-label">Turn</div>
           <div class="slot-cards" id="turnSlots"></div>
         </div>
-        <div class="slot-group">
+        <div class="slot-group" id="riverSlots-wrap">
           <div class="slot-group-label">River</div>
           <div class="slot-cards" id="riverSlots"></div>
         </div>
