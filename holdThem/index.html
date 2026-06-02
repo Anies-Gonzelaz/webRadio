@@ -16,293 +16,186 @@
     --border: #CCCCCC;
     --green: #00CC44;
     --red: #FF2222;
+    --touch-min: 44px;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
 
   html, body {
-    height: 100%; overflow: hidden;
-    background: var(--black); /* 底部安全区背景跟 input-panel 一致，不露白 */
+    height: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--black);
     font-family: "Helvetica Neue", Arial, sans-serif;
     color: var(--black);
   }
 
-  /* iOS 16 PWA fix:
-     100dvh 在 iOS standalone 模式下不含底部安全区，导致白边。
-     改用 position:fixed + inset:0 撑满物理屏幕。 */
   #app {
     position: fixed;
     inset: 0;
-    display: flex; flex-direction: column;
-    padding: 0 8px 8px;        /* 左右底统一收边 8px */
+    display: flex;
+    flex-direction: column;
+    padding: 0 8px 8px;
     background: var(--paper);
   }
 
-  /* ── INPUT PANEL 底部安全区 ── */
   #input-panel {
-    flex-shrink: 0; background: var(--white);
+    flex-shrink: 0;
+    background: var(--white);
     border: 1px solid var(--border);
     border-top: 2px solid var(--black);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    margin-bottom: 0;          /* 底部空间由 #app padding 提供 */
+    margin-bottom: 0;
   }
 
-  /* ── TOP BAR ── */
   #topbar {
-    display: flex; align-items: center; justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 10px 16px;
     padding-top: calc(10px + env(safe-area-inset-top, 0px));
-    background: var(--black); color: var(--white);
+    background: var(--black);
+    color: var(--white);
     flex-shrink: 0;
-    margin: 0 -8px;   /* 抵消 #app 的横向 padding，顶满屏幕 */
+    margin: 0 -8px;
   }
-  .logo { font-family: "Courier New", monospace; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; }
+
+  .logo {
+    font-family: "Courier New", monospace;
+    font-size: clamp(10px, 2.5vw, 11px);
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
   .logo span { color: var(--accent); }
+
   .phase-dots { display: flex; gap: 4px; }
   .pdot { width: 8px; height: 8px; border: 1px solid #444; background: transparent; transition: background 0.1s; }
   .pdot.active { background: var(--accent); border-color: var(--accent); }
-  .pdot.done   { background: var(--white);  border-color: var(--white); }
+  .pdot.done { background: var(--white); border-color: var(--white); }
+
   .opp-row { display: flex; align-items: center; gap: 6px; }
-  .opp-label { font-family: "Courier New", monospace; font-size: 9px; letter-spacing: 0.15em; color: #888; }
+  .opp-label { font-family: "Courier New", monospace; font-size: clamp(8px, 2vw, 9px); letter-spacing: 0.15em; color: #888; }
   .opp-step { display: flex; border: 1px solid #444; }
-  .opp-btn { width: 24px; height: 24px; border: none; background: transparent; color: var(--white); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .opp-btn { min-width: var(--touch-min); min-height: var(--touch-min); border: none; background: transparent; color: var(--white); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
   .opp-btn:active { background: #333; }
-  .opp-num { width: 28px; height: 24px; border-left: 1px solid #444; border-right: 1px solid #444; display: flex; align-items: center; justify-content: center; font-family: "Courier New", monospace; font-size: 13px; font-weight: 900; color: var(--white); }
+  .opp-num { min-width: 28px; min-height: 24px; border-left: 1px solid #444; border-right: 1px solid #444; display: flex; align-items: center; justify-content: center; font-family: "Courier New", monospace; font-size: clamp(12px, 2.5vw, 14px); }
 
-  /* ── ODDS AREA ── */
-
-  /* ── CARD SLOTS — single row, fluid width ── */
-  #slots-panel {
-    background: var(--white); border: 1px solid var(--border);
-    padding: 6px 6px 5px;
-    overflow: hidden;
-  }
-  #all-slots-row {
-    display: flex;
-    align-items: flex-end;
-    width: 100%;
-    gap: 0;
-  }
-  /* slot-group 按卡片数量占比伸缩：hand=2, flop=3, turn=1, river=1 */
+  #slots-panel { background: var(--white); border: 1px solid var(--border); padding: 6px 6px 5px; overflow: hidden; }
+  #all-slots-row { display: flex; align-items: flex-end; width: 100%; gap: 0; }
   .slot-group { display: flex; flex-direction: column; min-width: 0; }
-  #handSlots-wrap  { flex: 2; }
-  #flopSlots-wrap  { flex: 3; }
-  #turnSlots-wrap  { flex: 1; }
+  #handSlots-wrap { flex: 2; }
+  #flopSlots-wrap { flex: 3; }
+  #turnSlots-wrap { flex: 1; }
   #riverSlots-wrap { flex: 1; }
-
-  .slot-group + .slot-group {
-    border-left: 1px solid var(--border);
-    margin-left: 3px;
-    padding-left: 3px;
-  }
-  .slot-group-label {
-    font-family: "Courier New", monospace; font-size: 7px;
-    letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray);
-    margin-bottom: 3px; white-space: nowrap; overflow: hidden;
-  }
+  .slot-group + .slot-group { border-left: 1px solid var(--border); margin-left: 3px; padding-left: 3px; }
+  .slot-group-label { font-family: "Courier New", monospace; font-size: clamp(6px, 1.8vw, 7px); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); margin-bottom: 3px; white-space: nowrap; overflow: hidden; }
   .slot-cards { display: flex; gap: 2px; width: 100%; }
 
-  /* 槽位等宽：在各自 group 内 flex:1 均分，group 按牌数占比，结果每张牌等宽 */
-  .card-slot {
-    flex: 1; min-width: 0; overflow: hidden;
-    aspect-ratio: 0.68;
-    border: 1px dashed var(--border); background: var(--white);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    cursor: pointer; position: relative; gap: 1px;
-    transition: border-color 0.08s;
-    border-radius: 2px;
-    container-type: inline-size;
-  }
+  .card-slot { flex: 1; min-width: 0; overflow: hidden; aspect-ratio: 0.68; border: 1px dashed var(--border); background: var(--white); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; gap: 1px; transition: border-color 0.08s; border-radius: 2px; container-type: inline-size; }
   .card-slot.target { border: 2px solid var(--accent); background: #fff3ef; }
   .card-slot.filled { border: 2px solid var(--black); }
   .card-slot.filled.red-suit { border-color: #CC2200; }
-  .card-slot .cr { font-size: max(10px, min(17px, 36cqw)); font-weight: 900; line-height: 1; }
-  .card-slot .cs { font-size: max(9px,  min(17px, 40cqw)); line-height: 1; }
-  .card-slot .empty-num { font-size: max(7px, min(10px, 24cqw)); color: var(--border); }
-  .card-slot.filled::after {
-    content: '×'; position: absolute; top: 1px; right: 2px;
-    font-size: 8px; color: var(--gray); font-weight: bold;
-  }
+  .card-slot .cr { font-size: clamp(10px, 5vw, 17px); font-weight: 900; line-height: 1; }
+  .card-slot .cs { font-size: clamp(9px, 5.5vw, 17px); line-height: 1; }
+  .card-slot .empty-num { font-size: clamp(7px, 2.5vw, 10px); color: var(--border); }
+  .card-slot.filled::after { content: '×'; position: absolute; top: 1px; right: 2px; font-size: 8px; color: var(--gray); font-weight: bold; }
 
-  /* ── ODDS AREA ── */
-  #odds-area {
-    flex: 1; overflow: hidden;
-    padding: 8px 0 0;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-
-  /* ── ODDS + HISTORY 合并为左右面板，固定高度不挤牌位 ── */
-  #odds-main {
-    background: var(--white); border: 1px solid var(--border);
-    display: flex; gap: 0;
-    flex: 1;           /* 撑满 odds-area 剩余高度 */
-    min-height: 0;     /* 让 flex 子元素可以被压缩 */
-    overflow: hidden;
-  }
-  /* 空态：居中占满 */
-  #odds-empty {
-    flex: 1; display: flex; flex-direction: column;
-    align-items: center; justify-content: center; gap: 4px;
-    padding: 12px;
-  }
-  .big-q { font-size: 32px; font-weight: 900; color: var(--border); line-height: 1; font-family: "Courier New", monospace; }
-  .empty-hint { font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.15em; color: var(--gray); text-align: center; }
-
-  /* 有结果时：左胜率 + 右历史，撑满父容器高度 */
+  #odds-area { flex: 1; overflow: hidden; padding: 8px 0 0; display: flex; flex-direction: column; gap: 8px; }
+  #odds-main { background: var(--white); border: 1px solid var(--border); display: flex; gap: 0; flex: 1; min-height: 0; overflow: hidden; }
+  #odds-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px; }
+  .big-q { font-size: clamp(24px, 8vw, 32px); font-weight: 900; color: var(--border); line-height: 1; font-family: "Courier New", monospace; }
+  .empty-hint { font-family: "Courier New", monospace; font-size: clamp(7px, 2vw, 8px); letter-spacing: 0.15em; color: var(--gray); text-align: center; }
   #odds-result { display: none; width: 100%; height: 100%; }
   #odds-inner { display: flex; width: 100%; height: 100%; }
-
-  /* 左：胜率数字 */
-  #odds-left {
-    flex: 4; min-width: 0;
-    border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; align-items: stretch;
-    padding: 0; overflow: hidden;
-  }
-  /* 上：胜率置顶 */
-  #odds-left-top {
-    padding: 10px 12px 8px; margin: 0 20px;
-    display: flex; flex-direction: column; align-items: center; gap: 3px;
-    flex-shrink: 0;
-  }
-  .win-pct { font-family: "Courier New", monospace; font-size: 40px; font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
-  .win-pct.win  { color: var(--green); }
+  #odds-left { flex: 4; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: stretch; padding: 0; overflow: hidden; }
+  #odds-left-top { padding: 10px 12px 8px; margin: 0 20px; display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+  .win-pct { font-family: "Courier New", monospace; font-size: clamp(28px, 10vw, 40px); font-weight: 900; line-height: 1; letter-spacing: -0.02em; }
+  .win-pct.win { color: var(--green); }
   .win-pct.lose { color: var(--red); }
   .bar-track { width: 100%; height: 3px; background: var(--paper); border: 1px solid var(--border); }
   .bar-fill { height: 100%; transition: width 0.4s ease-out; }
-  .win-label { font-family: "Courier New", monospace; font-size: 7px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); text-align: center; }
-  /* 下：图片区，撑满剩余 */
-  #odds-img-area {
-    flex: 1; min-height: 0;
-    border-top: 1px solid var(--border);
-    overflow: hidden; position: relative;
-    background: var(--paper);
-  }
-  #odds-img-area img {
-    width: 100%; height: 100%;
-    object-fit: cover; display: block;
-  }
-  #odds-img-placeholder {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: "Courier New", monospace; font-size: 8px; letter-spacing: 0.12em;
-    color: var(--border); text-transform: uppercase; text-align: center;
-    padding: 8px;
-  }
-
-  /* 右：历史记录，撑满高度，内部滚动 */
-  #odds-right {
-    flex: 6; min-width: 0;
-    display: flex; flex-direction: column;
-    overflow: hidden; height: 100%;
-    border-left: 1px solid var(--border);
-  }
-  .hist-header {
-    background: var(--black); color: var(--white);
-    padding: 6px 10px; display: flex; justify-content: space-between; align-items: center;
-    font-family: "Courier New", monospace; font-size: 10px; letter-spacing: 0.12em;
-    flex-shrink: 0; white-space: nowrap;
-  }
+  .win-label { font-family: "Courier New", monospace; font-size: clamp(6px, 1.8vw, 7px); letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray); text-align: center; }
+  #odds-img-area { flex: 1; min-height: 0; border-top: 1px solid var(--border); overflow: hidden; position: relative; background: var(--paper); }
+  #odds-img-area img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  #odds-img-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Courier New", monospace; font-size: clamp(7px, 2vw, 8px); letter-spacing: 0.12em; color: var(--border); text-transform: uppercase; text-align: center; padding: 8px; }
+  #odds-right { flex: 6; min-width: 0; display: flex; flex-direction: column; overflow: hidden; height: 100%; border-left: 1px solid var(--border); }
+  .hist-header { background: var(--black); color: var(--white); padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; font-family: "Courier New", monospace; font-size: clamp(9px, 2.5vw, 10px); letter-spacing: 0.12em; flex-shrink: 0; white-space: nowrap; }
   .hist-header span:last-child { color: var(--gray); }
-  .hist-empty { padding: 12px 10px; font-family: "Courier New", monospace; font-size: 11px; letter-spacing: 0.1em; color: var(--gray); text-align: center; }
-  #histBody {
-    flex: 1; min-height: 0;
-    overflow-y: auto; -webkit-overflow-scrolling: touch;
-  }
-  .hist-row {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 10px; border-top: 1px solid var(--border);
-    font-family: "Courier New", monospace;
-    white-space: nowrap;
-  }
-  .hist-phase { text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); font-size: 11px; }
-  .hist-pct { font-weight: 900; font-size: 13px; margin-left: 6px; }
-  .win-val  { color: var(--green); }
-  .tie-val  { color: var(--gray); }
+  .hist-empty { padding: 12px 10px; font-family: "Courier New", monospace; font-size: clamp(10px, 2.5vw, 11px); letter-spacing: 0.1em; color: var(--gray); text-align: center; }
+  #histBody { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .hist-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-top: 1px solid var(--border); font-family: "Courier New", monospace; white-space: nowrap; min-height: 40px; }
+  .hist-phase { text-transform: uppercase; letter-spacing: 0.06em; color: var(--gray); font-size: clamp(10px, 2.5vw, 11px); }
+  .hist-pct { font-weight: 900; font-size: clamp(12px, 3vw, 13px); margin-left: 6px; }
+  .win-val { color: var(--green); }
+  .tie-val { color: var(--gray); }
   .lose-val { color: var(--red); }
 
-  /* ── INPUT PANEL ── */
-
-  #hint-bar { padding: 5px 12px; font-family: "Courier New", monospace; font-size: 9px; letter-spacing: 0.12em; color: var(--gray); border-bottom: 1px solid var(--border); background: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-  /* suit tabs */
+  #hint-bar { padding: 5px 12px; font-family: "Courier New", monospace; font-size: clamp(8px, 2vw, 9px); letter-spacing: 0.12em; color: var(--gray); border-bottom: 1px solid var(--border); background: #fafafa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #suit-tabs { display: flex; border-bottom: 1px solid var(--border); }
-  .suit-tab {
-    flex: 1; padding: 10px 4px; font-size: 26px;
-    border: none; background: var(--paper); cursor: pointer;
-    border-right: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.08s, box-shadow 0.08s;
-    position: relative;
-  }
+  .suit-tab { flex: 1; padding: 10px 4px; font-size: clamp(20px, 6vw, 26px); border: none; background: var(--paper); cursor: pointer; border-right: 1px solid var(--border); display: flex; align-items: center; justify-content: center; transition: background 0.08s, box-shadow 0.08s; position: relative; min-height: var(--touch-min); }
   .suit-tab:last-child { border-right: none; }
-  .suit-tab.active {
-    background: var(--white);
-    box-shadow: inset 0 -3px 0 var(--accent);
-  }
-  .suit-tab.active::after {
-    content: '';
-    position: absolute; bottom: 0; left: 0; right: 0;
-    height: 3px; background: var(--accent);
-  }
+  .suit-tab.active { background: var(--white); box-shadow: inset 0 -3px 0 var(--accent); }
+  .suit-tab.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px; background: var(--accent); }
 
-  /* rank grid — A left spanning 2 rows, 12 others 2×6 on the right */
-  #rank-grid-wrap {
-    padding: 8px 10px 6px; border-bottom: 1px solid var(--border);
-  }
-  #rank-inner {
-    display: flex; gap: 6px; align-items: stretch;
-  }
-  .rank-btn-ace {
-    width: 44px; flex-shrink: 0;
-    font-family: "Courier New", monospace; font-size: 20px; font-weight: 900; text-align: center;
-    border: 1px solid var(--border); background: var(--paper); color: var(--black); cursor: pointer;
-    transition: background 0.06s; border-radius: 2px;
-    display: flex; align-items: center; justify-content: center;
-  }
+  #rank-grid-wrap { padding: clamp(6px, 2vw, 8px) clamp(8px, 2.5vw, 10px) clamp(4px, 1.5vw, 6px); border-bottom: 1px solid var(--border); max-height: 40vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  #rank-inner { display: flex; gap: 6px; align-items: stretch; }
+  .rank-btn-ace { flex-shrink: 0; min-width: var(--touch-min); min-height: var(--touch-min); font-family: "Courier New", monospace; font-size: clamp(16px, 4vw, 20px); font-weight: 900; text-align: center; border: 1px solid var(--border); background: var(--paper); color: var(--black); cursor: pointer; transition: background 0.06s; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
   .rank-btn-ace:active:not(:disabled) { background: var(--black); color: var(--white); }
-  .rank-btn-ace:disabled { opacity: 0.22; }
-
+  .rank-btn-ace:disabled { opacity: 0.22; cursor: not-allowed; }
   #rank-rows { flex: 1; display: flex; flex-direction: column; gap: 5px; }
   .rank-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px; }
-  .rank-btn {
-    padding: 10px 0;
-    font-family: "Courier New", monospace; font-size: 13px; font-weight: 700; text-align: center;
-    border: 1px solid var(--border); background: var(--paper); color: var(--black); cursor: pointer;
-    transition: background 0.06s; border-radius: 2px;
-  }
+  .rank-btn { padding: 10px 0; min-height: var(--touch-min); font-family: "Courier New", monospace; font-size: clamp(11px, 3vw, 13px); font-weight: 700; text-align: center; border: 1px solid var(--border); background: var(--paper); color: var(--black); cursor: pointer; transition: background 0.06s; border-radius: 2px; display: flex; align-items: center; justify-content: center; }
   .rank-btn:active:not(:disabled) { background: var(--black); color: var(--white); }
-  .rank-btn:disabled { opacity: 0.22; }
+  .rank-btn:disabled { opacity: 0.22; cursor: not-allowed; }
 
-  /* action row */
-  #action-row { display: flex; }
-  .act-btn {
-    flex: 1; padding: 14px;
-    font-family: "Courier New", monospace; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    border: none; border-right: 1px solid var(--border); cursor: pointer;
-    transition: background 0.06s;
-  }
+  #action-row { display: flex; gap: 0; }
+  .act-btn { flex: 1; padding: clamp(10px, 3vw, 14px); min-height: var(--touch-min); font-family: "Courier New", monospace; font-size: clamp(9px, 2.5vw, 11px); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: none; border-right: 1px solid var(--border); cursor: pointer; transition: background 0.06s; }
   .act-btn:last-child { border-right: none; }
   #resetBtn { background: var(--paper); color: var(--black); }
   #resetBtn:active { background: var(--border); }
-  #deleteBtn { background: var(--paper); color: var(--accent); font-size: 16px; }
+  #deleteBtn { background: var(--paper); color: var(--accent); font-size: clamp(12px, 3.5vw, 16px); }
   #deleteBtn:active { background: #ffe8e0; }
-  #deleteBtn:disabled { opacity: 0.3; }
+  #deleteBtn:disabled { opacity: 0.3; cursor: not-allowed; }
   #calcBtn { background: var(--black); color: #444; flex: 2; transition: background 0.15s, color 0.15s; }
   #calcBtn.ready { background: var(--accent); color: var(--white); }
   #calcBtn:active.ready { filter: brightness(0.9); }
   #calcBtn:disabled { cursor: default; }
 
-  /* computing */
-  #computing { display: none; align-items: center; justify-content: center; gap: 8px; padding: 6px; font-family: "Courier New", monospace; font-size: 10px; letter-spacing: 0.12em; color: var(--gray); border-top: 1px solid var(--border); }
+  #computing { display: none; align-items: center; justify-content: center; gap: 8px; padding: 6px; font-family: "Courier New", monospace; font-size: clamp(8px, 2.5vw, 10px); letter-spacing: 0.12em; color: var(--gray); }
   .spinner { width: 10px; height: 10px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.5s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 600px) {
+    #app { padding: 0 4px 4px; }
+    #topbar { padding: 8px 12px; padding-top: calc(8px + env(safe-area-inset-top, 0px)); gap: 8px; }
+    .logo { font-size: clamp(9px, 2.5vw, 11px); }
+    .opp-label { font-size: clamp(7px, 2vw, 9px); }
+    .opp-num { font-size: clamp(11px, 2.5vw, 14px); }
+    #odds-area { padding: 6px 0 0; gap: 6px; }
+    #odds-left-top { padding: 8px 10px 6px; margin: 0 16px; }
+    .win-pct { font-size: clamp(24px, 8vw, 36px); }
+    #odds-right { display: none; }
+    #odds-main { flex-direction: column; }
+    @media (orientation: landscape) and (max-height: 500px) {
+      #app { padding: 0 4px 0; }
+      #topbar { padding: 6px 12px; min-height: 40px; }
+      #odds-area { gap: 4px; padding: 4px 0 0; }
+      #odds-left-top { padding: 6px 10px 4px; margin: 0 12px; }
+      .win-pct { font-size: clamp(20px, 6vw, 28px); }
+      #rank-grid-wrap { max-height: 30vh; }
+      .act-btn { padding: clamp(8px, 2vw, 12px); }
+      #odds-right { display: flex; }
+    }
+  }
+
+  @media (min-width: 601px) and (max-width: 1024px) {
+    #app { padding: 0 6px 6px; }
+    .win-pct { font-size: clamp(32px, 8vw, 40px); }
+  }
 </style>
 </head>
 <body>
 <div id="app">
-
-  <!-- TOP BAR -->
   <div id="topbar">
     <div class="logo">TEXAS <span>ODDS</span></div>
     <div class="phase-dots">
@@ -321,10 +214,7 @@
     </div>
   </div>
 
-  <!-- ODDS DISPLAY -->
   <div id="odds-area">
-
-    <!-- card slots: single row -->
     <div id="slots-panel">
       <div id="all-slots-row">
         <div class="slot-group" id="handSlots-wrap">
@@ -346,7 +236,6 @@
       </div>
     </div>
 
-    <!-- odds + history: left/right panel -->
     <div id="odds-main">
       <div id="odds-empty">
         <div class="big-q">?</div>
@@ -354,7 +243,6 @@
       </div>
       <div id="odds-result">
         <div id="odds-inner">
-          <!-- left: win rate top + image below -->
           <div id="odds-left">
             <div id="odds-left-top">
               <div class="win-pct" id="winPct">--</div>
@@ -365,7 +253,6 @@
               <img src="https://anies-gonzelaz.github.io/webTools/holdThem/kapai.png" alt="">
             </div>
           </div>
-          <!-- right: history -->
           <div id="odds-right">
             <div class="hist-header"><span>HISTORY</span><span>WIN%</span></div>
             <div id="histBody"><div class="hist-empty">NO DATA</div></div>
@@ -373,22 +260,16 @@
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- BOTTOM INPUT PANEL -->
   <div id="input-panel">
     <div id="hint-bar">← TAP A CARD SLOT TO BEGIN</div>
-
-    <!-- Suit tabs -->
     <div id="suit-tabs">
       <button class="suit-tab active" onclick="selectSuit('♠')" id="tab-s">♠</button>
       <button class="suit-tab" onclick="selectSuit('♥')" id="tab-h" style="color:#CC2200;">♥</button>
       <button class="suit-tab" onclick="selectSuit('♦')" id="tab-d" style="color:#CC2200;">♦</button>
       <button class="suit-tab" onclick="selectSuit('♣')" id="tab-c">♣</button>
     </div>
-
-    <!-- Rank grid: A left 2-row tall, 12 others 2×6 right -->
     <div id="rank-grid-wrap">
       <div id="rank-inner">
         <button class="rank-btn-ace" data-rank="A" onclick="placeCard('A')">A</button>
@@ -398,31 +279,24 @@
         </div>
       </div>
     </div>
-
     <div id="computing"><div class="spinner"></div><span>SIMULATING...</span></div>
-
     <div id="action-row">
       <button class="act-btn" id="resetBtn" onclick="resetAll()">RESET</button>
       <button class="act-btn" id="deleteBtn" onclick="deleteLastCard()" disabled>⌫</button>
       <button class="act-btn" id="calcBtn" onclick="calculate()" disabled>CALCULATE →</button>
     </div>
   </div>
-
 </div>
 
 <script>
-// ─── CONSTANTS ───
 const SUITS = ['♠','♥','♦','♣'];
 const RED_SUITS = new Set(['♥','♦']);
 const RANK_VALUES = {'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'T':10,'J':11,'Q':12,'K':13,'A':14};
-
-// K Q J T 9 8 | 7 6 5 4 3 2
 const ROW1_RANKS = ['K','Q','J','T','9','8'];
 const ROW2_RANKS = ['7','6','5','4','3','2'];
 
-// ─── STATE ───
 let state = {
-  selectedSuit: null,   // null = 未选花色
+  selectedSuit: null,
   activeSlot: null,
   cards: { hand:[null,null], flop:[null,null,null], turn:[null], river:[null] },
   opponents: 2,
@@ -430,7 +304,6 @@ let state = {
   lastPlaced: null
 };
 
-// ─── INIT ───
 function init() {
   buildRankGrid();
   resetToDefault();
@@ -439,7 +312,6 @@ function init() {
 function resetToDefault() {
   state.selectedSuit = '♠';
   state.activeSlot = { group: 'hand', index: 0 };
-  // sync suit tab UI
   document.querySelectorAll('.suit-tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-s').classList.add('active');
   renderSlots();
@@ -463,7 +335,6 @@ function makeRankBtn(rank) {
   return btn;
 }
 
-// ─── SUIT ───
 function selectSuit(suit) {
   state.selectedSuit = suit;
   document.querySelectorAll('.suit-tab').forEach(t => t.classList.remove('active'));
@@ -472,7 +343,6 @@ function selectSuit(suit) {
   updateRankBtnStates();
 }
 
-// ─── SLOTS ───
 function renderSlots() {
   renderGroup('handSlots',  'hand',  2);
   renderGroup('flopSlots',  'flop',  3);
@@ -497,7 +367,7 @@ function renderGroup(cid, group, count) {
       if (RED_SUITS.has(card.suit)) slot.classList.add('red-suit');
       const color = RED_SUITS.has(card.suit) ? '#CC2200' : '#111111';
       slot.innerHTML = `<span class="cr" style="color:${color}">${card.rank==='T'?'10':card.rank}</span><span class="cs" style="color:${color}">${card.suit}</span>`;
-      slot.onclick = () => activateSlot(group, i);  // tap filled card to re-target
+      slot.onclick = () => activateSlot(group, i);
     } else {
       slot.innerHTML = `<span class="empty-num">${i+1}</span>`;
       slot.onclick = () => activateSlot(group, i);
@@ -515,9 +385,7 @@ function activateSlot(group, index) {
   if (!state.selectedSuit) {
     setHint('SLOT SELECTED — NOW PICK A SUIT ↓');
   } else {
-    setHint(card
-      ? `REPLACING ${group.toUpperCase()} #${index+1} (${card.rank==='T'?'10':card.rank}${card.suit})`
-      : `PLACING → ${group.toUpperCase()} CARD ${index+1}`);
+    setHint(card ? `REPLACING ${group.toUpperCase()} #${index+1} (${card.rank==='T'?'10':card.rank}${card.suit})` : `PLACING → ${group.toUpperCase()} CARD ${index+1}`);
   }
 }
 
@@ -530,37 +398,27 @@ function isGroupUnlocked(group) {
 }
 
 function placeCard(rank) {
-  if (!state.activeSlot) {
-    setHint('TAP A SLOT FIRST'); return;
-  }
+  if (!state.activeSlot) { setHint('TAP A SLOT FIRST'); return; }
   const card = { rank, suit: state.selectedSuit };
-
-  // Check if this exact card is used somewhere OTHER than the active slot
   const { group, index } = state.activeSlot;
   for (const g of ['hand','flop','turn','river']) {
     for (let i=0; i<state.cards[g].length; i++) {
       const c = state.cards[g][i];
       if (c && c.rank===card.rank && c.suit===card.suit) {
-        if (g===group && i===index) break; // replacing same slot, ok
+        if (g===group && i===index) break;
         setHint(`${card.rank==='T'?'10':card.rank}${card.suit} ALREADY USED`); return;
       }
     }
   }
-
   state.cards[group][index] = card;
   state.lastPlaced = { group, index };
-
-  // Cascade clear downstream
   cascadeDown(group);
-
-  // Auto-advance to next empty slot
   const next = findNextEmptySlot(group, index);
   state.activeSlot = next;
   renderSlots();
   updateRankBtnStates();
   setHint(next ? `PLACING → ${next.group.toUpperCase()} CARD ${next.index+1}` : 'ALL DONE — HIT CALCULATE');
 }
-
 
 function findNextEmptySlot(currentGroup, currentIndex) {
   const groups = ['hand','flop','turn','river'];
@@ -578,7 +436,6 @@ function findNextEmptySlot(currentGroup, currentIndex) {
 }
 
 function deleteLastCard() {
-  // 优先删除当前激活槽位里的牌
   if (state.activeSlot) {
     const { group, index } = state.activeSlot;
     if (state.cards[group][index]) {
@@ -589,12 +446,7 @@ function deleteLastCard() {
       return;
     }
   }
-  // 否则找最后一张有牌的槽位（逆序）
-  const order = [
-    ['river',0],['turn',0],
-    ['flop',2],['flop',1],['flop',0],
-    ['hand',1],['hand',0]
-  ];
+  const order = [['river',0],['turn',0],['flop',2],['flop',1],['flop',0],['hand',1],['hand',0]];
   for (const [g, i] of order) {
     if (state.cards[g][i]) {
       state.cards[g][i] = null;
@@ -625,25 +477,17 @@ function isCardUsed(card, skipGroup, skipIndex) {
 }
 
 function updateRankBtnStates() {
-  // 没选花色 或 没激活槽位 → 全部禁用
   const canPlace = state.selectedSuit !== null && state.activeSlot !== null;
   const sg = state.activeSlot?.group, si = state.activeSlot?.index;
-
   const aceBtn = document.querySelector('.rank-btn-ace');
   if (aceBtn) aceBtn.disabled = !canPlace || isCardUsed({rank:'A', suit:state.selectedSuit}, sg, si);
-
   document.querySelectorAll('.rank-btn').forEach(btn => {
     btn.disabled = !canPlace || isCardUsed({rank:btn.dataset.rank, suit:state.selectedSuit}, sg, si);
   });
 }
 
 function updatePhaseIndicator() {
-  const phases = [
-    state.cards.hand.every(c=>c),
-    state.cards.flop.every(c=>c),
-    state.cards.turn.every(c=>c),
-    state.cards.river.every(c=>c)
-  ];
+  const phases = [state.cards.hand.every(c=>c),state.cards.flop.every(c=>c),state.cards.turn.every(c=>c),state.cards.river.every(c=>c)];
   for (let i=0;i<4;i++) {
     const d = document.getElementById('pd'+i);
     d.classList.remove('active','done');
@@ -654,7 +498,6 @@ function updatePhaseIndicator() {
 
 function updateCalcBtn() {
   const btn = document.getElementById('calcBtn');
-  // Enabled only when hand is complete (2 cards)
   const canCalc = state.cards.hand.every(c=>c);
   btn.disabled = !canCalc;
   if (canCalc) btn.classList.add('ready');
@@ -663,7 +506,6 @@ function updateCalcBtn() {
 
 function updateDeleteBtn() {
   const btn = document.getElementById('deleteBtn');
-  // Enable if active slot has a card, OR lastPlaced exists
   let hasSomething = false;
   if (state.activeSlot) {
     const {group,index} = state.activeSlot;
@@ -691,7 +533,6 @@ function resetAll() {
   resetToDefault();
 }
 
-// ─── CARD ENGINE ───
 function cardToInt(card) { return RANK_VALUES[card.rank]*4 + SUITS.indexOf(card.suit); }
 
 function getDeck(used) {
@@ -815,32 +656,23 @@ async function exactTurn(myHand,community) {
 
 async function calculate() {
   if(!state.cards.hand[0]||!state.cards.hand[1]) return;
-  const community=[
-    ...state.cards.flop.filter(c=>c),
-    ...state.cards.turn.filter(c=>c),
-    ...state.cards.river.filter(c=>c)
-  ];
+  const community=[...state.cards.flop.filter(c=>c),...state.cards.turn.filter(c=>c),...state.cards.river.filter(c=>c)];
   const cNeed=5-community.length;
   const phaseName=cNeed===5?'PRE-FLOP':cNeed===2?'FLOP':cNeed===1?'TURN':'RIVER';
-
   document.getElementById('computing').style.display='flex';
   document.getElementById('calcBtn').disabled=true;
-
   let result;
   try {
     if(cNeed===0&&state.opponents===1) result=await exactRiver(state.cards.hand,community);
     else if(cNeed===1&&state.opponents===1) result=await exactTurn(state.cards.hand,community);
     else result=await monteCarlo(state.cards.hand,community,state.opponents,60000);
   } catch(e){ result={wins:0,ties:0,losses:1,total:1}; }
-
   document.getElementById('computing').style.display='none';
-  updateCalcBtn(); // restore button state
-
+  updateCalcBtn();
   const win=(result.wins/result.total*100).toFixed(1);
   const tie=(result.ties/result.total*100).toFixed(1);
   const lose=(result.losses/result.total*100).toFixed(1);
   const isExact=cNeed<=1&&state.opponents===1;
-
   renderOdds(win,tie,lose,result.total,isExact,community.length);
   addHistory(phaseName,win);
 }
@@ -861,25 +693,17 @@ function renderOdds(win,tie,lose,total,isExact,comLen) {
 function addHistory(phase,winPct) {
   state.history.push({phase,winPct});
   const body = document.getElementById('histBody');
-  body.innerHTML=state.history.map(h=>`
-    <div class="hist-row">
-      <span class="hist-phase">${h.phase}</span>
-      <span class="hist-pct ${parseFloat(h.winPct)>=50?'win-val':'lose-val'}">${h.winPct}%</span>
-    </div>`).join('');
+  body.innerHTML=state.history.map(h=>`<div class="hist-row"><span class="hist-phase">${h.phase}</span><span class="hist-pct ${parseFloat(h.winPct)>=50?'win-val':'lose-val'}">${h.winPct}%</span></div>`).join('');
   body.scrollTop = body.scrollHeight;
 }
 
 init();
 
-// ─── 禁用 Safari 双击缩放 ───
-// iOS 13+ 会忽略 user-scalable=no，用 JS 拦截双击
 ;(function() {
   let lastTap = 0;
   document.addEventListener('touchend', function(e) {
     const now = Date.now();
-    if (now - lastTap < 300) {
-      e.preventDefault();
-    }
+    if (now - lastTap < 300) { e.preventDefault(); }
     lastTap = now;
   }, { passive: false });
 })();
